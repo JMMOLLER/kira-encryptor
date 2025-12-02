@@ -4,7 +4,7 @@ import generateNonce from "../crypto/generateNonce";
 import encryptText from "../crypto/encryptText";
 import decryptText from "../crypto/decryptText";
 import EncryptorClass from "../libs/Encryptor";
-import sodium from "libsodium-wrappers";
+import sodium from "libsodium-wrappers-sumo";
 import { env } from "../configs/env";
 import hidefile from "hidefile";
 import path from "path";

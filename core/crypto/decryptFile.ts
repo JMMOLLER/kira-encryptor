@@ -1,7 +1,7 @@
 import { FileSystem } from "../libs/FileSystem";
 import { Transform, pipeline } from "stream";
 import decryptChunk from "./decryptChunk";
-import sodium from "libsodium-wrappers";
+import sodium from "libsodium-wrappers-sumo";
 import { promisify } from "util";
 
 const pipelineAsync = promisify(pipeline);

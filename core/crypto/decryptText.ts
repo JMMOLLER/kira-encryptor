@@ -1,5 +1,5 @@
 import type { BufferEncoding } from "../types/public";
-import sodium from "libsodium-wrappers";
+import sodium from "libsodium-wrappers-sumo";
 
 /**
  * @description `[ENG]` Decrypts the given encrypted text using the secret key.
