@@ -48,9 +48,7 @@ describe("FileSystem", () => {
 
     fileSystem.createReadStream("/mock/path");
 
-    expect(createReadStreamSpy).toHaveBeenCalledWith("/mock/path", {
-      highWaterMark: undefined
-    });
+    expect(createReadStreamSpy).toHaveBeenCalledWith("/mock/path", undefined);
   });
 
   it("should throw an error when creating a readable stream for a non-existent file", () => {
@@ -75,10 +73,12 @@ describe("FileSystem", () => {
     expect(unlinkSyncSpy).toHaveBeenCalledWith("/mock/path");
   });
 
-  it("should handle non-existent files gracefully when removing", () => {
+  it("should handle non-existent files gracefully when removing", async () => {
     vi.spyOn(fs, "existsSync").mockReturnValue(false);
 
-    expect(() => fileSystem.removeItem("/mock/path")).rejects.toThrow();
+    await expect(fileSystem.removeItem("/mock/path")).rejects.toThrow(
+      "Path not found: /mock/path"
+    );
   });
 
   it("should read a directory", () => {
