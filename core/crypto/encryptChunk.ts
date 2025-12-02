@@ -1,5 +1,5 @@
 import generateNonce from "./generateNonce";
-import sodium from "libsodium-wrappers";
+import sodium from "libsodium-wrappers-sumo";
 import type { WriteStream } from "fs";
 
 interface ChunkEncryptionProps {

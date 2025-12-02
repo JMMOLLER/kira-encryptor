@@ -1,4 +1,4 @@
-import sodium from "libsodium-wrappers";
+import sodium from "libsodium-wrappers-sumo";
 
 /**
  * @description `[ENG]` Generates a nonce for encryption.
