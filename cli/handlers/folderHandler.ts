@@ -9,7 +9,7 @@ import path from "path";
 type HanlderProps = {
   action: CliAction;
   folderPath: string;
-  password: string;
+  password: Buffer;
 };
 
 async function handleFolderAction(props: HanlderProps) {
