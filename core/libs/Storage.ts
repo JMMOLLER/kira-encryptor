@@ -58,6 +58,9 @@ class Storage {
     return await Storage.db.findOneAsync({ _id: id }).execAsync();
   }
 
+  /**
+   * @deprecated
+   */
   async refresh() {
     console.warn("[Core-Storage] This method is deprecated and does nothing.");
   }
