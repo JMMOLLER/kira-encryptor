@@ -1,6 +1,9 @@
 import { FileSystem } from "../libs/FileSystem";
 import { pipeline, Transform } from "stream";
+import sodium from "libsodium-wrappers-sumo";
+import deriveFileKey from "./deriveFileKey";
 import encryptChunk from "./encryptChunk";
+import generateSalt from "./generateSalt";
 import type { WriteStream } from "fs";
 import { promisify } from "util";
 
@@ -26,9 +29,29 @@ const FS = FileSystem.getInstance();
 async function encryptFile(props: FileEncryptionProps): Promise<void> {
   const { filePath, onProgress, tempPath, SECRET_KEY, blockSize } = props;
 
+  const salt = await generateSalt(); // 16 bytes
+  const fileKey = await deriveFileKey(SECRET_KEY, salt); // Uint8Array(32)
+
+  // Prepara header
+  const headerObj = {
+    kdf: sodium.crypto_pwhash_ALG_ARGON2ID13,
+    salt: Buffer.from(salt).toString("hex"),
+    opslimit: sodium.crypto_pwhash_OPSLIMIT_MODERATE,
+    memlimit: sodium.crypto_pwhash_MEMLIMIT_MODERATE,
+    version: 1
+  };
+  const headerJson = Buffer.from(JSON.stringify(headerObj), "utf8");
+  const magic = Buffer.from("AKRA"); // 4 bytes
+  const version = Buffer.from([0x01]); // 1 byte
+  const headerLen = Buffer.alloc(4);
+  headerLen.writeUInt32BE(headerJson.length, 0);
+
   // Streams for reading and writing file
   const rs = FS.createReadStream(filePath, { highWaterMark: blockSize });
   const ws = FS.createWriteStream(tempPath, { highWaterMark: blockSize });
+
+  // Write header to the beginning of the file
+  ws.write(Buffer.concat([magic, version, headerLen, headerJson]));
 
   // If logging is enabled, create a write stream for logging
   let log: WriteStream | null = null;
@@ -54,7 +77,7 @@ async function encryptFile(props: FileEncryptionProps): Promise<void> {
           log: log || undefined,
           chunk: chunkBuf,
           id: chunkCount,
-          SECRET_KEY
+          SECRET_KEY: fileKey
         });
 
         // Send the progress
