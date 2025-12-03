@@ -7,6 +7,7 @@ import path from "path";
 import fs from "fs";
 
 const storagePath = path.resolve(__dirname, "../test-storage.json");
+const secretKey = generateSecretKey(Buffer.from("mypassword"));
 const testItem: StorageItem = {
   encryptedName: "test.txt",
   originalName: "test.txt",
@@ -28,9 +29,9 @@ describe("Storage", () => {
 
   beforeEach(async () => {
     storage = new Storage(
-      generateSecretKey("mypassword"),
+      secretKey,
       env.ENCODING,
-      "test-storage.json"
+      storagePath
     );
     vi.clearAllMocks();
   });
