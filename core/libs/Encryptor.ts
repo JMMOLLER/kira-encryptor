@@ -41,7 +41,6 @@ class Encryptor {
   private processedBytes = 0;
 
   private constructor(password: Buffer) {
-    console.log(password.toString("hex"))
     this.SECRET_KEY = utils.generateSecretKey(password);
   }
 
