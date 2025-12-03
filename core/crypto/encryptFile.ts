@@ -1,17 +1,17 @@
 import { FileSystem } from "../libs/FileSystem";
 import { pipeline, Transform } from "stream";
-import sodium from "libsodium-wrappers-sumo";
 import deriveFileKey from "./deriveFileKey";
 import encryptChunk from "./encryptChunk";
 import generateSalt from "./generateSalt";
 import type { WriteStream } from "fs";
+import sodium from "sodium-native";
 import { promisify } from "util";
 
 interface FileEncryptionProps {
   filePath: Readonly<string>;
   onProgress: (processedBytes: number) => void;
   enableLogging?: boolean;
-  SECRET_KEY: Uint8Array;
+  SECRET_KEY: Buffer;
   blockSize: number;
   tempPath: string;
 }
@@ -29,8 +29,8 @@ const FS = FileSystem.getInstance();
 async function encryptFile(props: FileEncryptionProps): Promise<void> {
   const { filePath, onProgress, tempPath, SECRET_KEY, blockSize } = props;
 
-  const salt = await generateSalt(); // 16 bytes
-  const fileKey = await deriveFileKey(SECRET_KEY, salt); // Uint8Array(32)
+  const salt = generateSalt(); // 16 bytes
+  const fileKey = deriveFileKey(SECRET_KEY, salt); // Buffer(32)
 
   // Prepara header
   const headerObj = {

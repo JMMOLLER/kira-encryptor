@@ -20,7 +20,7 @@ class Storage {
    * @param dbPath - The path to the database file. Defaults to the value of `env.LIBRARY_PATH`.
    */
   constructor(
-    secretKey: Uint8Array,
+    secretKey: Buffer,
     encoding: Types.BufferEncoding,
     dbPath = env.LIBRARY_PATH
   ) {

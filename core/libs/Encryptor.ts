@@ -4,9 +4,9 @@ import encryptText from "../crypto/encryptText";
 import decryptText from "../crypto/decryptText";
 import { FileSystem } from "./FileSystem";
 import * as utils from "../utils/index";
-import sodium from "libsodium-wrappers-sumo";
 import { env } from "../configs/env";
 import parser from "filesize-parser";
+import sodium from "sodium-native";
 import Storage from "./Storage";
 import hidefile from "hidefile";
 import Piscina from "piscina";
@@ -22,7 +22,7 @@ class Encryptor {
   private DEFAULT_STEP_DELAY!: number;
   private ALLOW_EXTRA_PROPS!: boolean;
   private static STORAGE: Storage;
-  private SECRET_KEY: Uint8Array;
+  private SECRET_KEY: Buffer;
   private MAX_THREADS!: number;
   private LOG: boolean = false;
   private workerPath!: string;
@@ -40,7 +40,8 @@ class Encryptor {
   private totalFolderBytes = 0;
   private processedBytes = 0;
 
-  private constructor(password: string) {
+  private constructor(password: Buffer) {
+    console.log(password.toString("hex"))
     this.SECRET_KEY = utils.generateSecretKey(password);
   }
 
@@ -52,22 +53,20 @@ class Encryptor {
    * @see See the root `package.json` for worker paths.
    */
   static async init(
-    password: string,
+    password: Buffer,
     workerPath: string,
     options?: Types.EncryptorOptions
   ): Promise<Encryptor>;
   static async init(
-    password: string,
+    password: Buffer,
     workerPath?: undefined,
     options?: Types.EncryptorOptions
   ): Promise<Types.BasicEncryptor>;
   static async init(
-    password: string,
+    password: Buffer,
     workerPath?: string,
     options?: Types.EncryptorOptions
   ): Promise<Encryptor | Types.BasicEncryptor> {
-    await sodium.ready;
-
     const instance = new Encryptor(password);
     instance.DEFAULT_STEP_DELAY = options?.minDelayPerStep || 300;
     instance.ALLOW_EXTRA_PROPS = options?.allowExtraProps || false;

@@ -1,32 +1,40 @@
 import generateNonce from "./generateNonce";
-import sodium from "libsodium-wrappers-sumo";
 import type { WriteStream } from "fs";
+import sodium from "sodium-native";
 
 interface ChunkEncryptionProps {
-  SECRET_KEY: Uint8Array;
+  SECRET_KEY: Buffer;
   log?: WriteStream;
   chunk: Buffer;
   id: number;
 }
 
-async function encryptChunk(props: ChunkEncryptionProps): Promise<Buffer> {
+function encryptChunk(props: ChunkEncryptionProps): Buffer {
   const { chunk, SECRET_KEY, log } = props;
 
-  const nonce = await generateNonce();
-  const encrypted = sodium.crypto_secretbox_easy(chunk, nonce, SECRET_KEY);
+  // Generate nonce (Buffer)
+  const nonce = generateNonce();
 
-  // Prepare output: nonce + length + encrypted data
+  // Allocate ciphertext buffer: chunk + MAC
+  const encrypted = Buffer.alloc(
+    chunk.length + sodium.crypto_secretbox_MACBYTES
+  );
+  // Perform encryption
+  sodium.crypto_secretbox_easy(encrypted, chunk, nonce, SECRET_KEY);
+
+  // Prepare 4-byte big-endian length of encrypted payload
   const lenBuf = Buffer.alloc(4);
   lenBuf.writeUInt32BE(encrypted.length, 0);
 
-  // Write to the writable stream logging
+  // Optional logging
   if (log) {
     log.write(`📦 Chunk #${props.id}\n`);
-    log.write(` - Nonce: ${Buffer.from(nonce).toString("hex")}\n`);
-    log.write(` - Encrypted Length: ${Buffer.from(encrypted).length}\n`);
+    log.write(` - Nonce: ${nonce.toString("hex")}\n`);
+    log.write(` - Encrypted Length: ${encrypted.length}\n`);
   }
 
-  return Buffer.concat([Buffer.from(nonce), lenBuf, Buffer.from(encrypted)]);
+  // Return format: [nonce][len][cipher]
+  return Buffer.concat([nonce, lenBuf, encrypted]);
 }
 
 export default encryptChunk;

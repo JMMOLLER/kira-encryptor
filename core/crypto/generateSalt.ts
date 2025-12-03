@@ -1,6 +1,7 @@
-import sodium from 'libsodium-wrappers-sumo';
+import sodium from "sodium-native";
 
-export default async function generateSalt() {
-  await sodium.ready;
-  return sodium.randombytes_buf(sodium.crypto_pwhash_SALTBYTES);
+export default function generateSalt(): Buffer {
+  const salt = Buffer.alloc(sodium.crypto_pwhash_SALTBYTES);
+  sodium.randombytes_buf(salt);
+  return salt;
 }
