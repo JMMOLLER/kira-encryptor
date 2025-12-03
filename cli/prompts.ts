@@ -42,7 +42,7 @@ export async function askForOtherOperation() {
 }
 
 // Note: If you enter an incorrect password, you will have to restart the program
-let password: string | undefined = undefined;
+let password: Buffer | undefined = undefined;
 
 export async function askUserActions() {
   const { action } = await inquirer.prompt<{ action: CliAction }>([
@@ -156,7 +156,7 @@ export async function askUserActions() {
         }
       }
     ]);
-    password = pwd;
+    password = Buffer.from(pwd);
   }
 
   return { action, type, path, password };
