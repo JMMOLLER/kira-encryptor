@@ -1,7 +1,9 @@
 import { FileSystem } from "../libs/FileSystem";
 import { Transform, pipeline } from "stream";
-import decryptChunk from "./decryptChunk";
 import sodium from "libsodium-wrappers-sumo";
+import deriveFileKey from "./deriveFileKey";
+import decryptChunk from "./decryptChunk";
+import { open } from "fs/promises";
 import { promisify } from "util";
 
 const pipelineAsync = promisify(pipeline);
@@ -22,99 +24,178 @@ async function decryptFile(props: FileDecryptionProps): Promise<void> {
   // Ensure the sodium library is ready
   await sodium.ready;
 
-  // Streams for reading and writing file
-  const rs = FS.createReadStream(filePath, { highWaterMark: blockSize });
-  const ws = FS.createWriteStream(tempPath, { highWaterMark: blockSize });
+  // ---- 1) Read header (magic + version + headerLen + headerJson) ----
+  const fd = await open(filePath, "r");
+  try {
+    // First 9 bytes: 4 magic + 1 version + 4 headerLen
+    const headBuf = Buffer.alloc(9);
+    const { bytesRead } = await fd.read(headBuf, 0, headBuf.length, 0);
+    if (bytesRead < headBuf.length) {
+      throw new Error("Archivo demasiado corto: imposible leer header.");
+    }
 
-  // If logging is enabled, create a write stream for logging
-  let log: ReturnType<typeof FS.createWriteStream> | null = null;
-  if (props.enableLogging) {
-    log = FS.createWriteStream(filePath + ".enc.log");
-    log.write(`🟢 Inicio de cifrado: ${filePath}\n`);
-    log.write(`Tamaño total: ${FS.getStatFile(filePath).size} bytes\n`);
-  }
+    const magic = headBuf.subarray(0, 4).toString("ascii");
+    // const version = headBuf.readUInt8(4);
+    const headerLen = headBuf.readUInt32BE(5);
 
-  const decryptStream = new Transform({
-    readableObjectMode: false,
-    writableObjectMode: false,
-    async transform(chunk, _dec, cb) {
-      if (!(this as any)._leftover) {
-        (this as any)._leftover = Buffer.alloc(0);
-        (this as any)._chunkCount = 0;
-      }
-      let leftover: Buffer = (this as any)._leftover;
-      leftover = Buffer.concat([leftover, chunk]);
+    if (magic !== "AKRA") {
+      throw new Error(
+        "Magic inválido: no es un archivo cifrado en formato esperado."
+      );
+    }
 
-      const nonceLen = sodium.crypto_secretbox_NONCEBYTES;
-      const macLen = sodium.crypto_secretbox_MACBYTES;
-      let offset = 0;
-      try {
-        while (leftover.length - offset >= nonceLen + 4 + macLen) {
-          // Increment the chunk count
-          (this as any)._chunkCount++;
+    // Read header JSON
+    const headerJsonBuf = Buffer.alloc(headerLen);
+    const headerOffset = headBuf.length; // 9
+    const { bytesRead: headerBytesRead } = await fd.read(
+      headerJsonBuf,
+      0,
+      headerLen,
+      headerOffset
+    );
+    if (headerBytesRead < headerLen) {
+      throw new Error("No se pudo leer completamente el header JSON.");
+    }
 
-          const chunkNonce = leftover.subarray(offset, offset + nonceLen);
-          const lenBuf = leftover.subarray(
-            offset + nonceLen,
-            offset + nonceLen + 4
-          );
-          const encryptedLen = lenBuf.readUInt32BE(0);
+    const headerStr = headerJsonBuf.toString("utf8");
+    let headerObj: any;
+    try {
+      headerObj = JSON.parse(headerStr);
+    } catch (err) {
+      throw new Error("Header JSON inválido o corrupto.");
+    }
 
-          // Check if we have enough data for the encrypted chunk
-          if (leftover.length - offset < nonceLen + 4 + encryptedLen) break;
+    // Extract salt and KDF parameters
+    if (!headerObj?.salt) {
+      throw new Error("Header no contiene 'salt'.");
+    }
+    const saltHex: string = headerObj.salt;
+    const saltBuf = Buffer.from(saltHex, "hex");
+    if (saltBuf.length !== sodium.crypto_pwhash_SALTBYTES) {
+      throw new Error("Salt con tamaño incorrecto en el header.");
+    }
+    const salt = new Uint8Array(saltBuf);
 
-          const { newOffset, plain } = await decryptChunk({
-            id: (this as any)._chunkCount,
-            SECRET_KEY: props.SECRET_KEY,
-            encryptedLen,
-            chunkNonce,
-            nonceLen,
-            leftover,
-            offset
-          });
+    const opslimit =
+      headerObj.opslimit ?? sodium.crypto_pwhash_OPSLIMIT_MODERATE;
+    const memlimit =
+      headerObj.memlimit ?? sodium.crypto_pwhash_MEMLIMIT_MODERATE;
 
-          // Recalculate the offset for the next iteration
-          offset += newOffset;
+    // ---- 2) Generate derived key ----
+    const fileKey = await deriveFileKey(props.SECRET_KEY, salt, {
+      opslimit,
+      memlimit
+    });
 
-          // Send the progress
-          onProgress?.(nonceLen + 4 + encryptedLen);
+    // Close previous descriptor
+    await fd.close();
 
-          // Log the chunk details if logging is enabled
-          if (log && !log.closed) {
-            const n = (this as any)._chunkCount;
-            log.write(`📦 Chunk #${n}\n`);
-            log.write(` - Nonce: ${Buffer.from(chunkNonce).toString("hex")}\n`);
-            log.write(` - Encrypted Length: ${encryptedLen}\n`);
+    // Streams for reading and writing file
+    const rs = FS.createReadStream(filePath, {
+      highWaterMark: blockSize,
+      start: headBuf.length + headerLen // skip header
+    });
+    const ws = FS.createWriteStream(tempPath, { highWaterMark: blockSize });
+
+    // If logging is enabled, create a write stream for logging
+    let log: ReturnType<typeof FS.createWriteStream> | null = null;
+    if (props.enableLogging) {
+      log = FS.createWriteStream(filePath + ".enc.log");
+      log.write(`🟢 Inicio de cifrado: ${filePath}\n`);
+      log.write(`Tamaño total: ${FS.getStatFile(filePath).size} bytes\n`);
+      log.write(`Header: ${JSON.stringify(headerObj)}\n`);
+    }
+
+    const decryptStream = new Transform({
+      readableObjectMode: false,
+      writableObjectMode: false,
+      async transform(chunk, _dec, cb) {
+        if (!(this as any)._leftover) {
+          (this as any)._leftover = Buffer.alloc(0);
+          (this as any)._chunkCount = 0;
+        }
+        let leftover: Buffer = (this as any)._leftover;
+        leftover = Buffer.concat([leftover, chunk]);
+
+        const nonceLen = sodium.crypto_secretbox_NONCEBYTES;
+        const macLen = sodium.crypto_secretbox_MACBYTES;
+        let offset = 0;
+        try {
+          while (leftover.length - offset >= nonceLen + 4 + macLen) {
+            // Increment the chunk count
+            (this as any)._chunkCount++;
+
+            const chunkNonce = leftover.subarray(offset, offset + nonceLen);
+            const lenBuf = leftover.subarray(
+              offset + nonceLen,
+              offset + nonceLen + 4
+            );
+            const encryptedLen = lenBuf.readUInt32BE(0);
+
+            // Check if we have enough data for the encrypted chunk
+            if (leftover.length - offset < nonceLen + 4 + encryptedLen) break;
+
+            const { newOffset, plain } = await decryptChunk({
+              id: (this as any)._chunkCount,
+              SECRET_KEY: fileKey,
+              encryptedLen,
+              chunkNonce,
+              nonceLen,
+              leftover,
+              offset
+            });
+
+            // Recalculate the offset for the next iteration
+            offset += newOffset;
+
+            // Send the progress
+            onProgress?.(nonceLen + 4 + encryptedLen);
+
+            // Log the chunk details if logging is enabled
+            if (log && !log.closed) {
+              const n = (this as any)._chunkCount;
+              log.write(`📦 Chunk #${n}\n`);
+              log.write(
+                ` - Nonce: ${Buffer.from(chunkNonce).toString("hex")}\n`
+              );
+              log.write(` - Encrypted Length: ${encryptedLen}\n`);
+            }
+
+            // Push the decrypted data to the writable stream
+            this.push(plain);
           }
 
-          // Push the decrypted data to the writable stream
-          this.push(plain);
+          (this as any)._leftover = leftover.subarray(offset);
+          cb();
+        } catch (err) {
+          cb(err as Error);
         }
-
-        (this as any)._leftover = leftover.subarray(offset);
+      },
+      final(cb) {
+        const leftover: Buffer = (this as any)._leftover || Buffer.alloc(0);
+        if (leftover.length > 0) {
+          return cb(
+            new Error("There was some loose data left after the last block")
+          );
+        }
         cb();
-      } catch (err) {
-        cb(err as Error);
       }
-    },
-    final(cb) {
-      const leftover: Buffer = (this as any)._leftover || Buffer.alloc(0);
-      if (leftover.length > 0) {
-        return cb(
-          new Error("There was some loose data left after the last block")
-        );
-      }
-      cb();
+    });
+
+    // This call handles the piping of the read stream to the decrypt stream and then to the write stream
+    await pipelineAsync(rs, decryptStream, ws);
+
+    // Ensure the write stream logging is closed
+    if (log) {
+      log.end(`✅ Cifrado completado: ${filePath}\n`);
+      await new Promise<void>((resolve) => log.on("close", resolve));
     }
-  });
-
-  // This call handles the piping of the read stream to the decrypt stream and then to the write stream
-  await pipelineAsync(rs, decryptStream, ws);
-
-  // Ensure the write stream logging is closed
-  if (log) {
-    log.end(`✅ Cifrado completado: ${filePath}\n`);
-    await new Promise<void>((resolve) => log.on("close", resolve));
+  } finally {
+    try {
+      await fd.close();
+    } catch (_) {
+      // ignore error on close
+    }
   }
 }
 
