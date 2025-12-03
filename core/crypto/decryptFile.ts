@@ -1,8 +1,8 @@
 import { FileSystem } from "../libs/FileSystem";
 import { Transform, pipeline } from "stream";
-import sodium from "libsodium-wrappers-sumo";
 import deriveFileKey from "./deriveFileKey";
 import decryptChunk from "./decryptChunk";
+import sodium from "sodium-native";
 import { open } from "fs/promises";
 import { promisify } from "util";
 
@@ -14,15 +14,12 @@ interface FileDecryptionProps {
   enableLogging?: boolean;
   blockSize: number;
   onProgress: (processedBytes: number) => void;
-  SECRET_KEY: Uint8Array;
+  SECRET_KEY: Buffer;
   tempPath: string;
 }
 
 async function decryptFile(props: FileDecryptionProps): Promise<void> {
   const { filePath, onProgress, blockSize, tempPath } = props;
-
-  // Ensure the sodium library is ready
-  await sodium.ready;
 
   // ---- 1) Read header (magic + version + headerLen + headerJson) ----
   const fd = await open(filePath, "r");
@@ -74,7 +71,7 @@ async function decryptFile(props: FileDecryptionProps): Promise<void> {
     if (saltBuf.length !== sodium.crypto_pwhash_SALTBYTES) {
       throw new Error("Salt con tamaño incorrecto en el header.");
     }
-    const salt = new Uint8Array(saltBuf);
+    const salt = Buffer.from(saltBuf);
 
     const opslimit =
       headerObj.opslimit ?? sodium.crypto_pwhash_OPSLIMIT_MODERATE;
@@ -82,7 +79,7 @@ async function decryptFile(props: FileDecryptionProps): Promise<void> {
       headerObj.memlimit ?? sodium.crypto_pwhash_MEMLIMIT_MODERATE;
 
     // ---- 2) Generate derived key ----
-    const fileKey = await deriveFileKey(props.SECRET_KEY, salt, {
+    const fileKey = deriveFileKey(props.SECRET_KEY, salt, {
       opslimit,
       memlimit
     });

@@ -1,4 +1,4 @@
-import sodium from "libsodium-wrappers-sumo";
+import sodium from "sodium-native";
 
 interface ChunkDecryptionProps {
   id: number;
@@ -7,10 +7,10 @@ interface ChunkDecryptionProps {
   nonceLen: number;
   encryptedLen: number;
   chunkNonce: Buffer;
-  SECRET_KEY: Uint8Array;
+  SECRET_KEY: Buffer;
 }
 
-async function decryptChunk(props: ChunkDecryptionProps) {
+function decryptChunk(props: ChunkDecryptionProps) {
   const { leftover, encryptedLen, nonceLen, offset } = props;
 
   // Extract the encrypted chunk
@@ -19,14 +19,18 @@ async function decryptChunk(props: ChunkDecryptionProps) {
     offset + nonceLen + 4 + encryptedLen
   );
 
-  // Decrypt the chunk
-  const plain = sodium.crypto_secretbox_open_easy(
+  // Allocate buffer for plaintext
+  const plain = Buffer.alloc(encryptedLen - sodium.crypto_secretbox_MACBYTES);
+
+  // Decrypt chunk (returns boolean)
+  const ok = sodium.crypto_secretbox_open_easy(
+    plain,
     encryptedChunk,
     props.chunkNonce,
     props.SECRET_KEY
   );
-  if (!plain) {
-    throw new Error("Error when decoding block");
+  if (!ok) {
+    throw new Error(`Error when decoding block #${props.id}`);
   }
 
   return {

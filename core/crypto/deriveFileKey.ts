@@ -1,4 +1,4 @@
-import sodium from "libsodium-wrappers-sumo";
+import sodium from "sodium-native";
 
 interface KeyDerivationOptions {
   opslimit?: number;
@@ -14,26 +14,17 @@ interface KeyDerivationOptions {
  * - memlimit: sodium.crypto_pwhash_MEMLIMIT_MODERATE
  * - algo: sodium.crypto_pwhash_ALG_ARGON2ID13
  */
-export default async function deriveFileKey(
-  password: Uint8Array,
-  salt: Uint8Array,
+export default function deriveFileKey(
+  password: Buffer,
+  salt: Buffer,
   opts?: KeyDerivationOptions
-): Promise<Uint8Array> {
-  await sodium.ready;
-
-  const outLen = 32; // 256-bit key
+): Buffer {
+  const key = Buffer.alloc(32); // 256-bit key
   const opslimit = opts?.opslimit ?? sodium.crypto_pwhash_OPSLIMIT_MODERATE;
   const memlimit = opts?.memlimit ?? sodium.crypto_pwhash_MEMLIMIT_MODERATE;
   const algo = opts?.algo ?? sodium.crypto_pwhash_ALG_ARGON2ID13;
 
-  const key = sodium.crypto_pwhash(
-    outLen,
-    password,
-    salt,
-    opslimit,
-    memlimit,
-    algo
-  ) as Uint8Array;
+  sodium.crypto_pwhash(key, password, salt, opslimit, memlimit, algo);
 
   return key;
 }
