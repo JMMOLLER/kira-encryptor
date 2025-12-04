@@ -560,7 +560,7 @@ class Encryptor {
     // --------------------
     // PHASE D: Encrypt current folder’s name & register
     // --------------------
-    const encryptedName = await encryptText(
+    const encryptedName = encryptText(
       baseName,
       this.SECRET_KEY,
       this.ENCODING
@@ -830,7 +830,7 @@ class Encryptor {
         throw new Error("No se pudo obtener la ruta temporal del archivo.");
       }
 
-      const encryptedName = await encryptText(
+      const encryptedName = encryptText(
         fileBaseName,
         this.SECRET_KEY,
         this.ENCODING
