@@ -1,3 +1,4 @@
+import generateSecretKey from "../crypto/generateSecretKey";
 import type { Internal, Types } from "../types";
 import { MessageChannel } from "worker_threads";
 import encryptText from "../crypto/encryptText";
@@ -41,7 +42,7 @@ class Encryptor {
   private processedBytes = 0;
 
   private constructor(password: Buffer) {
-    this.SECRET_KEY = utils.generateSecretKey(password);
+    this.SECRET_KEY = generateSecretKey(password);
   }
 
   /**
