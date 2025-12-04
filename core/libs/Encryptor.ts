@@ -23,7 +23,10 @@ class Encryptor {
   private DEFAULT_STEP_DELAY!: number;
   private ALLOW_EXTRA_PROPS!: boolean;
   private static STORAGE: Storage;
-  private SECRET_KEY: Buffer;
+  /**
+   * Should be used as Uint8Array viewing a SharedArrayBuffer.
+   */
+  private readonly SECRET_KEY: Uint8Array;
   private MAX_THREADS!: number;
   private LOG: boolean = false;
   private workerPath!: string;
@@ -42,7 +45,10 @@ class Encryptor {
   private processedBytes = 0;
 
   private constructor(password: Buffer) {
-    this.SECRET_KEY = generateSecretKey(password);
+    const tmp = generateSecretKey(password);
+    const sab = new SharedArrayBuffer(tmp.length); // Create SharedArrayBuffer
+    this.SECRET_KEY = new Uint8Array(sab); // Create Uint8Array with underlying SharedArrayBuffer
+    this.SECRET_KEY.set(tmp);
   }
 
   /**
@@ -77,7 +83,7 @@ class Encryptor {
     instance.SILENT = options?.silent || false;
 
     Encryptor.STORAGE = new Storage(
-      instance.SECRET_KEY,
+      instance.SECRET_KEY as Buffer,
       instance.ENCODING,
       options?.libraryPath
     );
@@ -562,7 +568,7 @@ class Encryptor {
     // --------------------
     const encryptedName = encryptText(
       baseName,
-      this.SECRET_KEY,
+      this.SECRET_KEY as Buffer,
       this.ENCODING
     );
     let saved: Types.StorageItem = {
@@ -755,7 +761,7 @@ class Encryptor {
     // --------------------
     const originalName = decryptText(
       currentFolder.encryptedName,
-      this.SECRET_KEY,
+      this.SECRET_KEY as Buffer,
       this.ENCODING
     );
 
@@ -832,7 +838,7 @@ class Encryptor {
 
       const encryptedName = encryptText(
         fileBaseName,
-        this.SECRET_KEY,
+        this.SECRET_KEY as Buffer,
         this.ENCODING
       );
       savedItem = {

@@ -8,7 +8,7 @@ export interface WorkerTask {
   taskType: "encrypt" | "decrypt";
   filePath: string;
   enableLogging?: boolean;
-  SECRET_KEY: Buffer;
+  readonly SECRET_KEY: Uint8Array;
   tempPath: string;
   port: MessagePort;
   blockSize: number;
