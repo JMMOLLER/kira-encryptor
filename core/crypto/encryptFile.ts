@@ -54,7 +54,7 @@ async function encryptFile(props: FileEncryptionProps): Promise<void> {
   ws.write(Buffer.concat([magic, version, headerLen, headerJson]));
 
   // If logging is enabled, create a write stream for logging
-  let log: WriteStream | null = null;
+  let log: WriteStream | undefined;
   let chunkCount = 0;
   if (props.enableLogging) {
     log = FS.createWriteStream(filePath + ".enc.log");
@@ -73,8 +73,8 @@ async function encryptFile(props: FileEncryptionProps): Promise<void> {
           : Buffer.from(chunk as string);
 
         // Encrypt the chunk
-        const encryptedChunk = await encryptChunk({
-          log: log || undefined,
+        const encryptedChunk = encryptChunk({
+          log,
           chunk: chunkBuf,
           id: chunkCount,
           SECRET_KEY: fileKey
