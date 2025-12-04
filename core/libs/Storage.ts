@@ -31,8 +31,8 @@ class Storage {
         const foo = decryptText(line, secretKey, encoding);
         return foo;
       },
-      afterSerialization: async (line) => {
-        const foo = await encryptText(line, secretKey, encoding);
+      afterSerialization: (line) => {
+        const foo = encryptText(line, secretKey, encoding);
         return foo;
       }
     });
