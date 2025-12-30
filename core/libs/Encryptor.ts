@@ -216,6 +216,8 @@ class Encryptor {
    * @description `[ES]` Cifra un archivo utilizando la clave secreta y lo guarda con un nuevo nombre.
    */
   async encryptFile(props: Types.FileEncryptor) {
+    await Encryptor.STORAGE.ready; // Ensure storage is ready
+
     const stats = Encryptor.FS.getStatFile(props.filePath);
     if (!stats.isFile()) {
       return Promise.reject(
@@ -328,6 +330,8 @@ class Encryptor {
    * @description `[ES]` Descifra un archivo utilizando la clave secreta y lo guarda con el nombre original.
    */
   async decryptFile(props: Types.FileDecryptor) {
+    await Encryptor.STORAGE.ready; // Ensure storage is ready
+
     const stats = Encryptor.FS.getStatFile(props.filePath);
     if (!stats.isFile()) {
       return Promise.reject(
@@ -429,6 +433,8 @@ class Encryptor {
    * @description `[ES]` Cifra recursivamente todos los archivos dentro de una carpeta.
    */
   async encryptFolder(props: Types.FolderEncryptor) {
+    await Encryptor.STORAGE.ready; // Ensure storage is ready
+
     const stats = Encryptor.FS.getStatFile(props.folderPath);
     if (stats.isFile()) {
       return Promise.reject(
@@ -659,6 +665,8 @@ class Encryptor {
    * @description `[ES]` Descifra recursivamente todos los archivos dentro de una carpeta.
    */
   async decryptFolder(props: Types.FolderDecryptor) {
+    await Encryptor.STORAGE.ready; // Ensure storage is ready
+
     const stats = Encryptor.FS.getStatFile(props.folderPath);
     if (stats.isFile()) {
       return Promise.reject(
