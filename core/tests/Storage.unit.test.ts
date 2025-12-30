@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterAll } from "vitest";
-import generateSecretKey from "../utils/generateSecretKey";
+import generateSecretKey from "../crypto/generateSecretKey";
 import type { StorageItem } from "../types/public";
 import Storage from "../libs/Storage";
 import { env } from "../configs/env";
