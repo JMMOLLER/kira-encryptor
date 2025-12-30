@@ -58,6 +58,12 @@ class Storage {
 
       // Read the database file and parse its contents.
       const data = this.fs.readFile(this.dbPath);
+
+      // If the file is empty, resolve immediately.
+      if (!data || data.length === 0) {
+        this._resolveReady();
+        return;
+      }
       const parsed = decode(data) as Types.StorageItem; // using msgpack
 
       if (!parsed) throw new Error("Failed to parse storage data.");
