@@ -1,7 +1,7 @@
 {
   "name": "@akira-encryptor/core",
   "description": "A tool for encrypting and decrypting files and folders using libsodium.",
-  "version": "0.5.0-beta",
+  "version": "0.6.0-beta",
   "author": "JMMOLLER",
   "files": [
     "dist"
