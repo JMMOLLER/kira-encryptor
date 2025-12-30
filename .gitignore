@@ -176,6 +176,7 @@ dist
 
 # Dev
 library.json
+storage.bin
 *.enc
 test.ts
 pendings.md
