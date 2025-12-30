@@ -18,11 +18,8 @@ const pwd = generateSecretKey(pwdBuff);
 
 beforeAll(async () => {
   process.env.NODE_ENV = "test"; // Set NODE_ENV to test
-  
 
-  Encryptor = await (
-    await import("../libs/Encryptor")
-  ).default.init(pwdBuff, "dist/esm/workers/encryptor.worker.js", {
+  Encryptor = await EncryptorClass.init(pwdBuff, "dist/esm/workers/encryptor.worker.js", {
     libraryPath: tempDir + "/test-library.json",
     allowExtraProps: true,
     minDelayPerStep: 0,
