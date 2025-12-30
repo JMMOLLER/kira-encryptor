@@ -1,5 +1,7 @@
-import generateSecretKey from "../crypto/generateSecretKey";
+import type { StructuredSerializeOptions } from "worker_threads";
 import type { Internal, Types } from "../types";
+
+import generateSecretKey from "../crypto/generateSecretKey";
 import { MessageChannel } from "worker_threads";
 import encryptText from "../crypto/encryptText";
 import decryptText from "../crypto/decryptText";
@@ -293,7 +295,7 @@ class Encryptor {
           filePath
         },
         {
-          transferList: [channel.port1]
+          transferList: [channel.port1] as StructuredSerializeOptions
         }
       );
 
@@ -395,7 +397,7 @@ class Encryptor {
           tempPath
         },
         {
-          transferList: [channel.port1]
+          transferList: [channel.port1] as StructuredSerializeOptions
         }
       );
 
