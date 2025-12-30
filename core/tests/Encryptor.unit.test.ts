@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import generateSecretKey from "../utils/generateSecretKey";
+import generateSecretKey from "../crypto/generateSecretKey";
 import generateNonce from "../crypto/generateNonce";
 import encryptText from "../crypto/encryptText";
 import decryptText from "../crypto/decryptText";
@@ -26,7 +26,7 @@ beforeAll(async () => {
     libraryPath: tempDir + "/test-library.json",
     allowExtraProps: true,
     minDelayPerStep: 0,
-    maxThreads: 4,
+    maxThreads: 2,
     silent: true
   });
 
