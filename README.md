@@ -29,7 +29,7 @@ Puedes crear un archivo `.env` en la raíz del proyecto con el siguiente conteni
 
 ```env
 MAX_THREADS=<number_of_threads> #Número de hilos para operaciones multihilo [opcional]
-LIBRARY_PATH=<your_path> #Ruta donde se guardará el storage [opcional]
+DB_PATH=<your_path> #Ruta donde se guardará el storage [opcional]
 ENCODING=<encoding_value> #Codificación de datos [opcional]
 PASSWORD=<your_password> #Contraseña para cifrado/descifrado [opcional]
 ```

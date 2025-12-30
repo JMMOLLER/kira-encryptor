@@ -20,7 +20,7 @@ beforeAll(async () => {
   process.env.NODE_ENV = "test"; // Set NODE_ENV to test
 
   Encryptor = await EncryptorClass.init(pwdBuff, "dist/esm/workers/encryptor.worker.js", {
-    libraryPath: tempDir + "/test-library.json",
+    dbPath: tempDir + "/test-storage.bin",
     allowExtraProps: true,
     minDelayPerStep: 0,
     maxThreads: 2,

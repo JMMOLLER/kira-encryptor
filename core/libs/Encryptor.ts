@@ -87,7 +87,7 @@ class Encryptor {
     Encryptor.STORAGE = new Storage(
       instance.SECRET_KEY as Buffer,
       instance.ENCODING,
-      options?.libraryPath
+      options?.dbPath
     );
 
     if (!workerPath) {

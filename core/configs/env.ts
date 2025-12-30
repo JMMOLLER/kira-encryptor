@@ -15,7 +15,7 @@ const envSchema = z.object({
       { message: "Invalid value encoding" }
     )
     .default("base64"),
-  LIBRARY_PATH: z.string().default("./library.json"),
+  DB_PATH: z.string().default("./storage.bin"),
   LOG: z
     .string()
     .transform((val) => val === "true")
