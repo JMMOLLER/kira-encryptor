@@ -6,7 +6,7 @@ import { env } from "../configs/env";
 import path from "path";
 import fs from "fs";
 
-const storagePath = path.resolve(__dirname, "../test-storage.json");
+const storagePath = path.resolve(__dirname, "../test-storage.bin");
 const secretKey = generateSecretKey(Buffer.from("mypassword"));
 const testItem: StorageItem = {
   encryptedName: "test.txt",
