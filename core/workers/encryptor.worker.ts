@@ -14,20 +14,20 @@ export default async function run(params: WorkerTask) {
       onProgress: (processedBytes) => {
         port.postMessage({
           type: "progress",
-          processedBytes
+          processedBytes,
         });
       },
-      SECRET_KEY: params.SECRET_KEY as Buffer, // Excpected to be Uint8Array viewing a SharedArrayBuffer
+      SECRET_KEY: params.SECRET_KEY as Buffer, // Expected to be Uint8Array viewing a SharedArrayBuffer
       enableLogging: params.enableLogging,
       blockSize,
-      tempPath
+      tempPath,
     });
 
     return true;
   } catch (error) {
     port.postMessage({
       type: "error",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 }

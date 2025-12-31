@@ -96,7 +96,7 @@ class Encryptor {
         getStorage: instance.getStorage,
         refreshStorage: instance.refreshStorage,
         revealStoredItem: instance.revealStoredItem.bind(instance),
-        hideStoredItem: instance.hideStoredItem.bind(instance)
+        hideStoredItem: instance.hideStoredItem.bind(instance),
       };
     }
 
@@ -119,7 +119,7 @@ class Encryptor {
         concurrentTasksPerWorker: 1,
         filename: this.workerPath,
         idleTimeout: 30000,
-        minThreads: 1
+        minThreads: 1,
       });
     }
   }
@@ -228,7 +228,7 @@ class Encryptor {
 
     return this._encryptFile({
       ...props,
-      isInternalFlow: false
+      isInternalFlow: false,
     });
   }
   private async _encryptFile(props: Internal.FileEncryptor) {
@@ -295,10 +295,10 @@ class Encryptor {
           taskType: "encrypt",
           port: channel.port1,
           tempPath,
-          filePath
+          filePath,
         },
         {
-          transferList: [channel.port1] as StructuredSerializeOptions
+          transferList: [channel.port1] as StructuredSerializeOptions,
         }
       );
 
@@ -309,7 +309,7 @@ class Encryptor {
         fileBaseName,
         fileStats,
         fileDir,
-        filePath
+        filePath,
       })) as Types.FileItem;
 
       return Promise.resolve(fileItem);
@@ -342,7 +342,7 @@ class Encryptor {
 
     return this._decryptFile({
       ...props,
-      isInternalFlow: false
+      isInternalFlow: false,
     });
   }
   private async _decryptFile(props: Internal.FileDecryptor) {
@@ -412,7 +412,7 @@ class Encryptor {
         folderPath: filePath,
         fileItem,
         outPath,
-        tempPath
+        tempPath,
       });
 
       return Promise.resolve();
@@ -445,7 +445,7 @@ class Encryptor {
 
     return this._encryptFolder({
       ...props,
-      isInternalFlow: false
+      isInternalFlow: false,
     });
   }
   private async _encryptFolder(props: Internal.FolderEncryptor) {
@@ -501,7 +501,7 @@ class Encryptor {
             isInternalFlow: true,
             folderPath: path.join(folderPath, entry.name),
             tempPath: path.join(tempPath, entry.name),
-            onProgress
+            onProgress,
           });
         });
         subfolderPromises.push(subfolderTask);
@@ -540,7 +540,7 @@ class Encryptor {
               isInternalFlow: true,
               onProgress: () => {
                 onProgress?.(this.processedBytes, this.totalFolderBytes);
-              }
+              },
             });
             subFile.path = subFile.path.replace(tempPath, folderPath);
             return subFile;
@@ -569,7 +569,7 @@ class Encryptor {
     // --------------------
     const content: (Types.FileItem | Types.FolderItem)[] = [
       ...subfolders,
-      ...files
+      ...files,
     ];
 
     // --------------------
@@ -588,7 +588,7 @@ class Encryptor {
       path: folderPath,
       type: "folder",
       encryptedName,
-      content
+      content,
     };
 
     if (!isInternalFlow) {
@@ -612,7 +612,7 @@ class Encryptor {
       // Save to storage, then mark spinner as succeeded
       await Promise.all([
         Encryptor.STORAGE.set(saved),
-        utils.delay(this.stepDelay)
+        utils.delay(this.stepDelay),
       ]).then(([storageItem]) => {
         saved = storageItem;
         this.saveStep?.succeed("Carpeta encriptada registrada correctamente.");
@@ -677,7 +677,7 @@ class Encryptor {
 
     return this._decryptFolder({
       ...props,
-      isInternalFlow: false
+      isInternalFlow: false,
     });
   }
   private async _decryptFolder(props: Internal.FolderDecryptor) {
@@ -722,7 +722,7 @@ class Encryptor {
             folderPath: fullPath,
             isInternalFlow: true,
             folderItem: item,
-            onProgress
+            onProgress,
           });
         });
         subfolderPromises.push(task);
@@ -749,7 +749,7 @@ class Encryptor {
               fileItem: item,
               onProgress: () => {
                 onProgress?.(this.processedBytes, this.totalFolderBytes);
-              }
+              },
             });
           } catch (err) {
             // Only skip if error indicates file was not registered
@@ -859,7 +859,7 @@ class Encryptor {
         size: fileStats.size,
         encryptedAt: new Date(),
         _id: utils.generateUID(),
-        type: "file"
+        type: "file",
       };
       if (!props.isInternalFlow) {
         if (!this.SILENT) {
@@ -878,7 +878,7 @@ class Encryptor {
         }
         await Promise.all([
           Encryptor.STORAGE.set(savedItem),
-          utils.delay(this.stepDelay)
+          utils.delay(this.stepDelay),
         ]).then(([storageItem]) => {
           this.saveStep?.succeed(
             "Archivo encriptado registrado correctamente."
@@ -898,7 +898,7 @@ class Encryptor {
       }
       await Promise.all([
         Encryptor.FS.safeRename(tempPath, renamedTempFile),
-        utils.delay(this.stepDelay)
+        utils.delay(this.stepDelay),
       ]).then(() => {
         this.renameStep?.succeed(
           "Archivo encriptado renombrado correctamente."
@@ -911,7 +911,7 @@ class Encryptor {
       }
       await Promise.all([
         Encryptor.FS.copyItem(renamedTempFile, destPath),
-        utils.delay(this.stepDelay)
+        utils.delay(this.stepDelay),
       ]).then(() => {
         this.copyStep?.succeed("Archivo encriptado movido correctamente.");
       });
@@ -923,7 +923,7 @@ class Encryptor {
       await Promise.all([
         Encryptor.FS.removeItem(filePath),
         Encryptor.FS.removeItem(renamedTempFile),
-        utils.delay(this.stepDelay)
+        utils.delay(this.stepDelay),
       ]).then(() => {
         this.removeStep?.succeed("Archivo original eliminado correctamente.");
       });
@@ -985,7 +985,7 @@ class Encryptor {
       }
       await Promise.all([
         Encryptor.FS.replaceFile(tempPath, restoredPath, inputBuffer),
-        utils.delay(this.stepDelay)
+        utils.delay(this.stepDelay),
       ]).then(() => {
         this.renameStep?.succeed("Archivo original reemplazado correctamente.");
       });
@@ -998,7 +998,7 @@ class Encryptor {
         }
         await Promise.all([
           Encryptor.FS.removeItem(folderPath),
-          utils.delay(this.stepDelay)
+          utils.delay(this.stepDelay),
         ]).then(() => {
           this.removeStep?.succeed("Archivo temporal eliminado correctamente.");
         });
@@ -1012,7 +1012,7 @@ class Encryptor {
         }
         await Promise.all([
           Encryptor.STORAGE.delete(fileName),
-          utils.delay(this.stepDelay)
+          utils.delay(this.stepDelay),
         ]).then(() => {
           this.saveStep?.succeed("Archivo eliminado del registro.");
         });
