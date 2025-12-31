@@ -15,8 +15,12 @@ class Storage {
   private readonly fs: FileSystem;
   private readonly dbPath: string;
 
-  private _rejectReady!: (error: unknown) => void;
+  /**
+   * @description `[ENG]` Promise that resolves when the storage is ready to be used.
+   * @description `[ESP]` Promesa que se resuelve cuando el almacenamiento está listo para ser usado.
+   */
   public readonly ready: Promise<void>;
+  private _rejectReady!: (error: unknown) => void;
   private _resolveReady!: () => void;
 
   /**

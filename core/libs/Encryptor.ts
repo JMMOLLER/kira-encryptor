@@ -89,6 +89,7 @@ class Encryptor {
       instance.ENCODING,
       options?.dbPath
     );
+    await Encryptor.STORAGE.ready;
 
     if (!workerPath) {
       return {
