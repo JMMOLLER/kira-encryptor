@@ -61,7 +61,7 @@
     }
   },
   "scripts": {
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist; rm -rf akira-encryptor-core-*.tgz",
     "typecheck": "bun tsc --noEmit -p tsconfig.json",
     "tests": "bun run build && bun vitest",
     "build": "bun run clean && bun run build:types && tsup && bun run scripts/patch-cjs-requires.ts && bun run scripts/patch-mjs-imports.ts && pnpm pack",
