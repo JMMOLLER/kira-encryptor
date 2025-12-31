@@ -12,18 +12,18 @@ type HanlderProps = {
   password: Buffer;
 };
 
+const progressBar = new cliProgress.SingleBar(
+  {
+    format: "Progreso total |{bar}| {percentage}% || {processed}/{formattedTotal}"
+  },
+  cliProgress.Presets.shades_classic
+);
+
 async function handleFolderAction(props: HanlderProps) {
   const { action, folderPath, password } = props;
 
   let init = false;
   let formattedTotal = "0B";
-  const progressBar = new cliProgress.SingleBar(
-    {
-      format:
-        "Progreso total |{bar}| {percentage}% || {processed}/{formattedTotal}"
-    },
-    cliProgress.Presets.shades_classic
-  );
 
   const handleProgress: EncryptorType.ProgressCallback = (processed, total) => {
     if (!init) {
@@ -69,6 +69,9 @@ async function handleFolderAction(props: HanlderProps) {
   };
 
   try {
+    // Ensure the bar is not running from a previous operation
+    progressBar.stop();
+
     const Encryptor = await EncryptorClass.init(password, workerPath);
 
     if (action === "encrypt") {
