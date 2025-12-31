@@ -12,16 +12,15 @@ type HanlderProps = {
   password: Buffer;
 };
 
+const progressBar = new cliProgress.SingleBar(
+  {
+    format: "Progreso total |{bar}| {percentage}% || {processed}/{formattedTotal}"
+  },
+  cliProgress.Presets.shades_classic
+);
+
 async function handleFileAction(props: HanlderProps) {
   const { action, filePath, password } = props;
-
-  const progressBar = new cliProgress.SingleBar(
-    {
-      format:
-        "Progreso total |{bar}| {percentage}% || {processed}/{formattedTotal}"
-    },
-    cliProgress.Presets.shades_classic
-  );
 
   let formattedTotal = "0B";
   let init = false;
@@ -70,6 +69,9 @@ async function handleFileAction(props: HanlderProps) {
   };
 
   try {
+    // Ensure the bar is not running from a previous operation
+    progressBar.stop();
+
     const Encryptor = await EncryptorClass.init(password, workerPath);
 
     if (action === "encrypt") {
