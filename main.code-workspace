@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "./core"
+		},
+		{
+			"path": "./cli"
+		},
+		{
+			"path": "./gui"
+		}
+	],
+  "settings": {
+  }
+}
