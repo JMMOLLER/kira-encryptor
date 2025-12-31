@@ -11,17 +11,24 @@ interface HidePromptOptions {
   item: FileItem | FolderItem;
 }
 
+// Create a prompt module with custom input and output streams
+// This prevents maxListenersExceededWarning in some environments
+const prompt = inquirer.createPromptModule({
+  input: process.stdin,
+  output: process.stdout,
+});
+
 export async function askForHideItem(props: HidePromptOptions) {
   const { actionFor, Encryptor, item } = props;
-  const { hide } = await inquirer.prompt<{ hide: boolean }>([
+  const { hide } = await prompt<{ hide: boolean }>([
     {
       type: "confirm",
       name: "hide",
       message: `¿Desea ocultar ${
         actionFor === "file" ? "el archivo" : "la carpeta"
       }`,
-      default: false
-    }
+      default: false,
+    },
   ]);
   if (hide) {
     await Encryptor.hideStoredItem(item._id);
@@ -30,13 +37,13 @@ export async function askForHideItem(props: HidePromptOptions) {
 
 export async function askForOtherOperation() {
   process.stdout.write("\n");
-  const { exit } = await inquirer.prompt([
+  const { exit } = await prompt([
     {
       type: "confirm",
       name: "exit",
       message: "¿Desea realizar otra operación?",
-      default: false
-    }
+      default: false,
+    },
   ]);
   return !exit;
 }
@@ -45,19 +52,19 @@ export async function askForOtherOperation() {
 let password: Buffer | undefined = undefined;
 
 export async function askUserActions() {
-  const { action } = await inquirer.prompt<{ action: CliAction }>([
+  const { action } = await prompt<{ action: CliAction }>([
     {
       type: "list",
       name: "action",
       message: "¿Qué desea realizar?",
       choices: [
         { name: "Encriptar", value: "encrypt" },
-        { name: "Desencriptar", value: "decrypt" }
-      ]
-    }
+        { name: "Desencriptar", value: "decrypt" },
+      ],
+    },
   ]);
 
-  const { type } = await inquirer.prompt<{ type: CliActionFor }>([
+  const { type } = await prompt<{ type: CliActionFor }>([
     {
       type: "list",
       name: "type",
@@ -66,9 +73,9 @@ export async function askUserActions() {
       }?`,
       choices: [
         { name: "Carpeta", value: "folder" },
-        { name: "Archivo", value: "file" }
-      ]
-    }
+        { name: "Archivo", value: "file" },
+      ],
+    },
   ]);
 
   let path: string = "";
@@ -76,7 +83,7 @@ export async function askUserActions() {
   if (password && action === "decrypt") {
     const encryptor = await Encryptor.init(password, workerPath, {
       minDelayPerStep: 0,
-      silent: true
+      silent: true,
     });
     const storage = await encryptor.getStorage();
     const values = Array.from(storage.values());
@@ -89,7 +96,7 @@ export async function askUserActions() {
           value: item.path.replace(
             item.originalName!,
             item.type === "folder" ? named : named + ".enc"
-          )
+          ),
         };
       });
 
@@ -98,20 +105,20 @@ export async function askUserActions() {
       choices.push({ value: "Otra ruta...", name: "Otra ruta..." });
 
       // Prompt the user to select a path
-      let { selectedPath } = await inquirer.prompt<{ selectedPath: string }>([
+      let { selectedPath } = await prompt<{ selectedPath: string }>([
         {
           type: "list",
           name: "selectedPath",
           message: `Seleccione el elemento que desea desencriptar:`,
-          choices
-        }
+          choices,
+        },
       ]);
       path = selectedPath;
     }
   }
 
   if (!path || path === "Otra ruta...") {
-    let { digitedPath } = await inquirer.prompt<{ digitedPath: string }>([
+    let { digitedPath } = await prompt<{ digitedPath: string }>([
       {
         type: "input",
         name: "digitedPath",
@@ -132,15 +139,15 @@ export async function askUserActions() {
             return "La ruta especificada no es un archivo.";
           }
           return true;
-        }
-      }
+        },
+      },
     ]);
     path = digitedPath;
   }
 
   if (!password) {
     const storeExists = FileSystem.getInstance().itemExists("./library.json");
-    const { password: pwd } = await inquirer.prompt<{ password: string }>([
+    const { password: pwd } = await prompt<{ password: string }>([
       {
         type: "password",
         name: "password",
@@ -153,8 +160,8 @@ export async function askUserActions() {
             return "La contraseña debe tener al menos 4 caracteres.";
           }
           return true;
-        }
-      }
+        },
+      },
     ]);
     password = Buffer.from(pwd);
   }
