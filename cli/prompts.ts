@@ -2,7 +2,7 @@ import type { FileItem, FolderItem } from "@akira-encryptor/core/types";
 import Encryptor, { FileSystem } from "@akira-encryptor/core";
 import * as utils from "@akira-encryptor/core/utils";
 import { workerPath } from "./const/workerPath";
-import inquirer from "inquirer";
+import prompts from "prompts";
 import fs from "fs";
 
 interface HidePromptOptions {
@@ -11,25 +11,18 @@ interface HidePromptOptions {
   item: FileItem | FolderItem;
 }
 
-// Create a prompt module with custom input and output streams
-// This prevents maxListenersExceededWarning in some environments
-const prompt = inquirer.createPromptModule({
-  input: process.stdin,
-  output: process.stdout,
-});
-
 export async function askForHideItem(props: HidePromptOptions) {
   const { actionFor, Encryptor, item } = props;
-  const { hide } = await prompt<{ hide: boolean }>([
+  const { hide } = (await prompts([
     {
       type: "confirm",
       name: "hide",
       message: `¿Desea ocultar ${
         actionFor === "file" ? "el archivo" : "la carpeta"
       }`,
-      default: false,
+      initial: false,
     },
-  ]);
+  ])) as { hide: boolean };
   if (hide) {
     await Encryptor.hideStoredItem(item._id);
   }
@@ -37,14 +30,14 @@ export async function askForHideItem(props: HidePromptOptions) {
 
 export async function askForOtherOperation() {
   process.stdout.write("\n");
-  const { exit } = await prompt([
+  const { exit } = (await prompts([
     {
       type: "confirm",
       name: "exit",
       message: "¿Desea realizar otra operación?",
-      default: false,
+      initial: false,
     },
-  ]);
+  ])) as { exit: boolean };
   return !exit;
 }
 
@@ -52,31 +45,39 @@ export async function askForOtherOperation() {
 let password: Buffer | undefined = undefined;
 
 export async function askUserActions() {
-  const { action } = await prompt<{ action: CliAction }>([
+  const { action } = (await prompts([
     {
-      type: "list",
+      type: "select",
       name: "action",
       message: "¿Qué desea realizar?",
       choices: [
-        { name: "Encriptar", value: "encrypt" },
-        { name: "Desencriptar", value: "decrypt" },
+        { title: "Encriptar", value: "encrypt" },
+        { title: "Desencriptar", value: "decrypt" },
       ],
     },
-  ]);
+  ])) as { action?: CliAction };
 
-  const { type } = await prompt<{ type: CliActionFor }>([
+  if (!action) {
+    throw new Error("Acción no válida.");
+  }
+
+  const { type } = (await prompts([
     {
-      type: "list",
+      type: "select",
       name: "type",
       message: `¿Qué desea ${
         action === "encrypt" ? "encriptar" : "desencriptar"
       }?`,
       choices: [
-        { name: "Carpeta", value: "folder" },
-        { name: "Archivo", value: "file" },
+        { title: "Carpeta", value: "folder" },
+        { title: "Archivo", value: "file" },
       ],
     },
-  ]);
+  ])) as { type?: CliActionFor };
+
+  if (!type) {
+    throw new Error("Tipo no válido.");
+  }
 
   let path: string = "";
 
@@ -92,7 +93,7 @@ export async function askUserActions() {
       .map((item) => {
         const named = item.isHidden ? "." + item._id : item._id;
         return {
-          name: item.path + (item.isHidden ? " (*)" : ""),
+          title: item.path + (item.isHidden ? " (*)" : ""),
           value: item.path.replace(
             item.originalName!,
             item.type === "folder" ? named : named + ".enc"
@@ -102,30 +103,35 @@ export async function askUserActions() {
 
     if (choices.length > 0) {
       // I think this last choice is not needed, but I will leave it here for now 🤔
-      choices.push({ value: "Otra ruta...", name: "Otra ruta..." });
+      choices.push({ value: "Otra ruta...", title: "Otra ruta..." });
 
       // Prompt the user to select a path
-      let { selectedPath } = await prompt<{ selectedPath: string }>([
+      let { selectedPath } = (await prompts([
         {
-          type: "list",
+          type: "select",
           name: "selectedPath",
           message: `Seleccione el elemento que desea desencriptar:`,
           choices,
         },
-      ]);
+      ])) as { selectedPath?: string };
+
+      if (!selectedPath) {
+        throw new Error("Ruta no válida.");
+      }
+
       path = selectedPath;
     }
   }
 
   if (!path || path === "Otra ruta...") {
-    let { digitedPath } = await prompt<{ digitedPath: string }>([
+    let { digitedPath } = (await prompts([
       {
-        type: "input",
+        type: "text",
         name: "digitedPath",
         message: `Ruta de ${
           type === "folder" ? "la carpeta" : "el archivo"
         } a ${action === "encrypt" ? "encriptar" : "desencriptar"}:`,
-        filter: utils.normalizePath,
+        format: utils.normalizePath,
         validate: (v) => {
           const input = utils.normalizePath(v);
 
@@ -141,13 +147,18 @@ export async function askUserActions() {
           return true;
         },
       },
-    ]);
+    ])) as { digitedPath?: string };
+
+    if (!digitedPath) {
+      throw new Error("Ruta no válida.");
+    }
+
     path = digitedPath;
   }
 
   if (!password) {
     const storeExists = FileSystem.getInstance().itemExists("./library.json");
-    const { password: pwd } = await prompt<{ password: string }>([
+    const { password: pwd } = (await prompts([
       {
         type: "password",
         name: "password",
@@ -162,7 +173,12 @@ export async function askUserActions() {
           return true;
         },
       },
-    ]);
+    ])) as { password?: string };
+
+    if (!pwd) {
+      throw new Error("Contraseña no válida.");
+    }
+
     password = Buffer.from(pwd);
   }
 
