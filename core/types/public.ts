@@ -8,7 +8,7 @@ export interface WorkerTask {
   taskType: "encrypt" | "decrypt";
   filePath: string;
   enableLogging?: boolean;
-  SECRET_KEY: Uint8Array;
+  readonly SECRET_KEY: Uint8Array;
   tempPath: string;
   port: MessagePort;
   blockSize: number;
@@ -61,10 +61,10 @@ export interface EncryptorOptions {
 
   /**
    * @description `[ESP]` - Permite modificar la ubicación de la libreria de encryptor.
-   * @description `[ENG]` - Allows you to modify the location of the encryptor library.
-   * @default "./library.json"
+   * @description `[ENG]` - Allows you to modify the location of the encryptor storage file.
+   * @default "./storage.bin"
    */
-  libraryPath?: string;
+  dbPath?: string;
 
   /**
    * @description `[ESP]` - Permite indicar a la clase `Encryptor` que puede guardar propiedades extra en el `Storage`.

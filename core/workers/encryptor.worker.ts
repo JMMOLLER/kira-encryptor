@@ -3,7 +3,7 @@ import decryptFile from "../crypto/decryptFile";
 import encryptFile from "../crypto/encryptFile";
 
 export default async function run(params: WorkerTask) {
-  const { taskType, filePath, tempPath, SECRET_KEY, blockSize, port } = params;
+  const { taskType, filePath, tempPath, blockSize, port } = params;
   try {
     if (taskType === "decrypt" && !params.blockSize) {
       throw new Error("Block size is required for decryption.");
@@ -14,20 +14,21 @@ export default async function run(params: WorkerTask) {
       onProgress: (processedBytes) => {
         port.postMessage({
           type: "progress",
-          processedBytes
+          processedBytes,
         });
       },
-      SECRET_KEY,
-      tempPath,
+      SECRET_KEY: params.SECRET_KEY as Buffer, // Expected to be Uint8Array viewing a SharedArrayBuffer
+      enableLogging: params.enableLogging,
       blockSize,
-      enableLogging: params.enableLogging
+      tempPath,
     });
 
+    port.postMessage({ type: "done" });
     return true;
   } catch (error) {
     port.postMessage({
       type: "error",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 }

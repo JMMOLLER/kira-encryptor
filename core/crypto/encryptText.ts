@@ -1,28 +1,32 @@
 import type { BufferEncoding } from "../types/public";
 import generateNonce from "./generateNonce";
-import sodium from "libsodium-wrappers";
+import sodium from "sodium-native";
 
 /**
  * @description `[ENG]` Encrypts the given text using the secret key and a nonce.
  * @description `[ES]` Cifra el texto dado utilizando la clave secreta y un nonce.
  * @param txt - The text to be encrypted
  */
-export default async function encryptText(
+export default function encryptText(
   txt: string,
-  SECRET_KEY: Uint8Array,
+  SECRET_KEY: Buffer,
   encoding: BufferEncoding
-): Promise<string> {
-  // Convert the text to bytes
-  const textBytes = sodium.from_string(txt);
-  const nonce = await generateNonce();
+): string {
+  // Convert text to bytes
+  const textBytes = Buffer.from(txt, "utf8");
+  // Generate nonce (Buffer)
+  const nonce = generateNonce();
 
-  // Encrypt the text using the nonce and secret key
-  const cipher = sodium.crypto_secretbox_easy(textBytes, nonce, SECRET_KEY);
+  // Allocate buffer for ciphertext
+  const cipher = Buffer.alloc(
+    textBytes.length + sodium.crypto_secretbox_MACBYTES
+  );
 
-  // Combine the nonce and cipher into a single Uint8Array
-  const combined = new Uint8Array(nonce.length + cipher.length);
-  combined.set(nonce);
-  combined.set(cipher, nonce.length);
+  // Encrypt (in-place, no copy return)
+  sodium.crypto_secretbox_easy(cipher, textBytes, nonce, SECRET_KEY);
 
-  return Buffer.from(combined).toString(encoding);
+  // Combine nonce + cipher
+  const combined = Buffer.concat([nonce, cipher]);
+
+  return combined.toString(encoding);
 }

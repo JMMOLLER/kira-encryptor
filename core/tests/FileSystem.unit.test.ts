@@ -5,7 +5,7 @@ import fs from "fs";
 vi.mock("fs");
 vi.mock("path");
 vi.mock("@configs/env", () => ({
-  env: { LIBRARY_PATH: "/mock/library.json" }
+  env: { DB_PATH: "/mock/storage.bin" }
 }));
 vi.mock("@utils/generateUID", () => ({
   default: vi.fn(() => "mock-uid")

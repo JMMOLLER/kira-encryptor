@@ -1,10 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import generateSecretKey from "../utils/generateSecretKey";
+import generateSecretKey from "../crypto/generateSecretKey";
 import generateNonce from "../crypto/generateNonce";
 import encryptText from "../crypto/encryptText";
 import decryptText from "../crypto/decryptText";
 import EncryptorClass from "../libs/Encryptor";
-import sodium from "libsodium-wrappers";
 import { env } from "../configs/env";
 import hidefile from "hidefile";
 import path from "path";
@@ -14,19 +13,17 @@ let Encryptor: EncryptorClass;
 const tempDir = path.resolve(__dirname, "tmp");
 const testFolderPath = path.join(tempDir, "test-dir");
 const testFilePath = path.join(tempDir, "test-file.txt");
-const pwd = generateSecretKey("mypassword");
+const pwdBuff = Buffer.from("mypassword");
+const pwd = generateSecretKey(pwdBuff);
 
 beforeAll(async () => {
   process.env.NODE_ENV = "test"; // Set NODE_ENV to test
-  await sodium.ready;
 
-  Encryptor = await (
-    await import("../libs/Encryptor")
-  ).default.init("mypassword", "dist/esm/workers/encryptor.worker.js", {
-    libraryPath: tempDir + "/test-library.json",
+  Encryptor = await EncryptorClass.init(pwdBuff, "dist/esm/workers/encryptor.worker.js", {
+    dbPath: tempDir + "/test-storage.bin",
     allowExtraProps: true,
     minDelayPerStep: 0,
-    maxThreads: 4,
+    maxThreads: 2,
     silent: true
   });
 
@@ -50,23 +47,23 @@ afterAll(async () => {
 });
 
 describe("Encryptor", () => {
-  it("should handle empty strings correctly", async () => {
-    const encrypted = await encryptText("", pwd, env.ENCODING);
+  it("should handle empty strings correctly", () => {
+    const encrypted = encryptText("", pwd, env.ENCODING);
     const decrypted = decryptText(encrypted, pwd, env.ENCODING);
 
     expect(decrypted).toBe("");
   });
 
-  it("should encrypt and decrypt a simple message", async () => {
+  it("should encrypt and decrypt a simple message", () => {
     const message = "Hola mundo seguro!";
-    const encrypted = await encryptText(message, pwd, env.ENCODING);
+    const encrypted = encryptText(message, pwd, env.ENCODING);
     const decrypted = decryptText(encrypted, pwd, env.ENCODING);
 
     expect(decrypted).toBe(message);
   });
 
-  it("should throw an error when decrypting tampered data", async () => {
-    const encrypted = await encryptText("Mensaje original", pwd, env.ENCODING);
+  it("should throw an error when decrypting tampered data", () => {
+    const encrypted = encryptText("Mensaje original", pwd, env.ENCODING);
     const tampered = encrypted.slice(0, -4) + "1234"; // tampering the encrypted string
 
     expect(() => decryptText(tampered, pwd, env.ENCODING)).toThrow(
@@ -74,15 +71,15 @@ describe("Encryptor", () => {
     );
   });
 
-  it("should return a base64 encoded encrypted string", async () => {
-    const encrypted = await encryptText("Texto para test", pwd, env.ENCODING);
+  it("should return a base64 encoded encrypted string", () => {
+    const encrypted = encryptText("Texto para test", pwd, env.ENCODING);
     expect(typeof encrypted).toBe("string");
     expect(encrypted).toMatch(/^[A-Za-z0-9+/=]+$/);
   });
 
-  it("should generate a unique nonce each time", async () => {
-    const nonce1 = await generateNonce();
-    const nonce2 = await generateNonce();
+  it("should generate a unique nonce each time", () => {
+    const nonce1 = generateNonce();
+    const nonce2 = generateNonce();
 
     expect(nonce1).not.toBe(nonce2);
     expect(nonce1).toBeInstanceOf(Uint8Array);

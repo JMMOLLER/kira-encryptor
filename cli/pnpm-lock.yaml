@@ -20,6 +20,9 @@ importers:
       inquirer:
         specifier: ^12.6.3
         version: 12.6.3(@types/node@24.0.0)
+      sodium-native:
+        specifier: 5.0.10
+        version: 5.0.10
       typescript:
         specifier: ^5
         version: 5.8.3
@@ -40,7 +43,7 @@ importers:
 packages:
 
   '@akira-encryptor/core@file:../core/akira-encryptor-core-0.5.0-beta.tgz':
-    resolution: {integrity: sha512-YC1I02yhIPuyMfn05KuCfrcqicyP3kePwxrECkLUdM4bV75VvdJiIg9egHjrz11YVZAQj0ZU+epZTJ+I27BXlg==, tarball: file:../core/akira-encryptor-core-0.5.0-beta.tgz}
+    resolution: {integrity: sha512-AdCfeKlGY37THGOu8/iegjQatJDccN6bzlEiq6IODdR5cEDxZzD0FaJcofeZ5nAfMGXprzYih8sdb3eCSJVqSQ==, tarball: file:../core/akira-encryptor-core-0.5.0-beta.tgz}
     version: 0.5.0-beta
     peerDependencies:
       typescript: ^5
@@ -365,8 +368,8 @@ packages:
     cpu: [arm]
     os: [android]
 
-  '@napi-rs/nice-android-arm-eabi@1.0.4':
-    resolution: {integrity: sha512-OZFMYUkih4g6HCKTjqJHhMUlgvPiDuSLZPbPBWHLjKmFTv74COzRlq/gwHtmEVaR39mJQ6ZyttDl2HNMUbLVoA==}
+  '@napi-rs/nice-android-arm-eabi@1.1.1':
+    resolution: {integrity: sha512-kjirL3N6TnRPv5iuHw36wnucNqXAO46dzK9oPb0wj076R5Xm8PfUVA9nAFB5ZNMmfJQJVKACAPd/Z2KYMppthw==}
     engines: {node: '>= 10'}
     cpu: [arm]
     os: [android]
@@ -377,8 +380,8 @@ packages:
     cpu: [arm64]
     os: [android]
 
-  '@napi-rs/nice-android-arm64@1.0.4':
-    resolution: {integrity: sha512-k8u7cjeA64vQWXZcRrPbmwjH8K09CBnNaPnI9L1D5N6iMPL3XYQzLcN6WwQonfcqCDv5OCY3IqX89goPTV4KMw==}
+  '@napi-rs/nice-android-arm64@1.1.1':
+    resolution: {integrity: sha512-blG0i7dXgbInN5urONoUCNf+DUEAavRffrO7fZSeoRMJc5qD+BJeNcpr54msPF6qfDD6kzs9AQJogZvT2KD5nw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [android]
@@ -389,8 +392,8 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
-  '@napi-rs/nice-darwin-arm64@1.0.4':
-    resolution: {integrity: sha512-GsLdQvUcuVzoyzmtjsThnpaVEizAqH5yPHgnsBmq3JdVoVZHELFo7PuJEdfOH1DOHi2mPwB9sCJEstAYf3XCJA==}
+  '@napi-rs/nice-darwin-arm64@1.1.1':
+    resolution: {integrity: sha512-s/E7w45NaLqTGuOjC2p96pct4jRfo61xb9bU1unM/MJ/RFkKlJyJDx7OJI/O0ll/hrfpqKopuAFDV8yo0hfT7A==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
@@ -401,8 +404,8 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  '@napi-rs/nice-darwin-x64@1.0.4':
-    resolution: {integrity: sha512-1y3gyT3e5zUY5SxRl3QDtJiWVsbkmhtUHIYwdWWIQ3Ia+byd/IHIEpqAxOGW1nhhnIKfTCuxBadHQb+yZASVoA==}
+  '@napi-rs/nice-darwin-x64@1.1.1':
+    resolution: {integrity: sha512-dGoEBnVpsdcC+oHHmW1LRK5eiyzLwdgNQq3BmZIav+9/5WTZwBYX7r5ZkQC07Nxd3KHOCkgbHSh4wPkH1N1LiQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
@@ -413,8 +416,8 @@ packages:
     cpu: [x64]
     os: [freebsd]
 
-  '@napi-rs/nice-freebsd-x64@1.0.4':
-    resolution: {integrity: sha512-06oXzESPRdXUuzS8n2hGwhM2HACnDfl3bfUaSqLGImM8TA33pzDXgGL0e3If8CcFWT98aHows5Lk7xnqYNGFeA==}
+  '@napi-rs/nice-freebsd-x64@1.1.1':
+    resolution: {integrity: sha512-kHv4kEHAylMYmlNwcQcDtXjklYp4FCf0b05E+0h6nDHsZ+F0bDe04U/tXNOqrx5CmIAth4vwfkjjUmp4c4JktQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [freebsd]
@@ -425,8 +428,8 @@ packages:
     cpu: [arm]
     os: [linux]
 
-  '@napi-rs/nice-linux-arm-gnueabihf@1.0.4':
-    resolution: {integrity: sha512-CgklZ6g8WL4+EgVVkxkEvvsi2DSLf9QIloxWO0fvQyQBp6VguUSX3eHLeRpqwW8cRm2Hv/Q1+PduNk7VK37VZw==}
+  '@napi-rs/nice-linux-arm-gnueabihf@1.1.1':
+    resolution: {integrity: sha512-E1t7K0efyKXZDoZg1LzCOLxgolxV58HCkaEkEvIYQx12ht2pa8hoBo+4OB3qh7e+QiBlp1SRf+voWUZFxyhyqg==}
     engines: {node: '>= 10'}
     cpu: [arm]
     os: [linux]
@@ -437,8 +440,8 @@ packages:
     cpu: [arm64]
     os: [linux]
 
-  '@napi-rs/nice-linux-arm64-gnu@1.0.4':
-    resolution: {integrity: sha512-wdAJ7lgjhAlsANUCv0zi6msRwq+D4KDgU+GCCHssSxWmAERZa2KZXO0H2xdmoJ/0i03i6YfK/sWaZgUAyuW2oQ==}
+  '@napi-rs/nice-linux-arm64-gnu@1.1.1':
+    resolution: {integrity: sha512-CIKLA12DTIZlmTaaKhQP88R3Xao+gyJxNWEn04wZwC2wmRapNnxCUZkVwggInMJvtVElA+D4ZzOU5sX4jV+SmQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
@@ -449,8 +452,8 @@ packages:
     cpu: [arm64]
     os: [linux]
 
-  '@napi-rs/nice-linux-arm64-musl@1.0.4':
-    resolution: {integrity: sha512-4b1KYG+sriufhFrpUS9uNOEYYJqSfcbnwGx6uGX7JjrH8tELG90cOpCawz5THNIwlS3DhLgnCOcn0+4p6z26QA==}
+  '@napi-rs/nice-linux-arm64-musl@1.1.1':
+    resolution: {integrity: sha512-+2Rzdb3nTIYZ0YJF43qf2twhqOCkiSrHx2Pg6DJaCPYhhaxbLcdlV8hCRMHghQ+EtZQWGNcS2xF4KxBhSGeutg==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
@@ -461,8 +464,8 @@ packages:
     cpu: [ppc64]
     os: [linux]
 
-  '@napi-rs/nice-linux-ppc64-gnu@1.0.4':
-    resolution: {integrity: sha512-iaf3vMRgr23oe1PUaKpxaH3DS0IMN0+N9iEiWVwYPm/U15vZFYdqVegGfN2PzrZLUl5lc8ZxbmEKDfuqslhAMA==}
+  '@napi-rs/nice-linux-ppc64-gnu@1.1.1':
+    resolution: {integrity: sha512-4FS8oc0GeHpwvv4tKciKkw3Y4jKsL7FRhaOeiPei0X9T4Jd619wHNe4xCLmN2EMgZoeGg+Q7GY7BsvwKpL22Tg==}
     engines: {node: '>= 10'}
     cpu: [ppc64]
     os: [linux]
@@ -473,8 +476,8 @@ packages:
     cpu: [riscv64]
     os: [linux]
 
-  '@napi-rs/nice-linux-riscv64-gnu@1.0.4':
-    resolution: {integrity: sha512-UXoREY6Yw6rHrGuTwQgBxpfjK34t6mTjibE9/cXbefL9AuUCJ9gEgwNKZiONuR5QGswChqo9cnthjdKkYyAdDg==}
+  '@napi-rs/nice-linux-riscv64-gnu@1.1.1':
+    resolution: {integrity: sha512-HU0nw9uD4FO/oGCCk409tCi5IzIZpH2agE6nN4fqpwVlCn5BOq0MS1dXGjXaG17JaAvrlpV5ZeyZwSon10XOXw==}
     engines: {node: '>= 10'}
     cpu: [riscv64]
     os: [linux]
@@ -485,8 +488,8 @@ packages:
     cpu: [s390x]
     os: [linux]
 
-  '@napi-rs/nice-linux-s390x-gnu@1.0.4':
-    resolution: {integrity: sha512-eFbgYCRPmsqbYPAlLYU5hYTNbogmIDUvknilehHsFhCH1+0/kN87lP+XaLT0Yeq4V/rpwChSd9vlz4muzFArtw==}
+  '@napi-rs/nice-linux-s390x-gnu@1.1.1':
+    resolution: {integrity: sha512-2YqKJWWl24EwrX0DzCQgPLKQBxYDdBxOHot1KWEq7aY2uYeX+Uvtv4I8xFVVygJDgf6/92h9N3Y43WPx8+PAgQ==}
     engines: {node: '>= 10'}
     cpu: [s390x]
     os: [linux]
@@ -497,8 +500,8 @@ packages:
     cpu: [x64]
     os: [linux]
 
-  '@napi-rs/nice-linux-x64-gnu@1.0.4':
-    resolution: {integrity: sha512-4T3E6uTCwWT6IPnwuPcWVz3oHxvEp/qbrCxZhsgzwTUBEwu78EGNXGdHfKJQt3soth89MLqZJw+Zzvnhrsg1mQ==}
+  '@napi-rs/nice-linux-x64-gnu@1.1.1':
+    resolution: {integrity: sha512-/gaNz3R92t+dcrfCw/96pDopcmec7oCcAQ3l/M+Zxr82KT4DljD37CpgrnXV+pJC263JkW572pdbP3hP+KjcIg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
@@ -509,11 +512,17 @@ packages:
     cpu: [x64]
     os: [linux]
 
-  '@napi-rs/nice-linux-x64-musl@1.0.4':
-    resolution: {integrity: sha512-NtbBkAeyBPLvCBkWtwkKXkNSn677eaT0cX3tygq+2qVv71TmHgX4gkX6o9BXjlPzdgPGwrUudavCYPT9tzkEqQ==}
+  '@napi-rs/nice-linux-x64-musl@1.1.1':
+    resolution: {integrity: sha512-xScCGnyj/oppsNPMnevsBe3pvNaoK7FGvMjT35riz9YdhB2WtTG47ZlbxtOLpjeO9SqqQ2J2igCmz6IJOD5JYw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+
+  '@napi-rs/nice-openharmony-arm64@1.1.1':
+    resolution: {integrity: sha512-6uJPRVwVCLDeoOaNyeiW0gp2kFIM4r7PL2MczdZQHkFi9gVlgm+Vn+V6nTWRcu856mJ2WjYJiumEajfSm7arPQ==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [openharmony]
 
   '@napi-rs/nice-win32-arm64-msvc@1.0.1':
     resolution: {integrity: sha512-rEcz9vZymaCB3OqEXoHnp9YViLct8ugF+6uO5McifTedjq4QMQs3DHz35xBEGhH3gJWEsXMUbzazkz5KNM5YUg==}
@@ -521,8 +530,8 @@ packages:
     cpu: [arm64]
     os: [win32]
 
-  '@napi-rs/nice-win32-arm64-msvc@1.0.4':
-    resolution: {integrity: sha512-vubOe3i+YtSJGEk/++73y+TIxbuVHi+W8ZzrRm2eETCjCRwNlgbfToQZ85dSA+4iBB/NJRGNp+O4hfdbbttZWA==}
+  '@napi-rs/nice-win32-arm64-msvc@1.1.1':
+    resolution: {integrity: sha512-uoTb4eAvM5B2aj/z8j+Nv8OttPf2m+HVx3UjA5jcFxASvNhQriyCQF1OB1lHL43ZhW+VwZlgvjmP5qF3+59atA==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
@@ -533,8 +542,8 @@ packages:
     cpu: [ia32]
     os: [win32]
 
-  '@napi-rs/nice-win32-ia32-msvc@1.0.4':
-    resolution: {integrity: sha512-BMOVrUDZeg1RNRKVlh4eyLv5djAAVLiSddfpuuQ47EFjBcklg0NUeKMFKNrKQR4UnSn4HAiACLD7YK7koskwmg==}
+  '@napi-rs/nice-win32-ia32-msvc@1.1.1':
+    resolution: {integrity: sha512-CNQqlQT9MwuCsg1Vd/oKXiuH+TcsSPJmlAFc5frFyX/KkOh0UpBLEj7aoY656d5UKZQMQFP7vJNa1DNUNORvug==}
     engines: {node: '>= 10'}
     cpu: [ia32]
     os: [win32]
@@ -545,8 +554,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@napi-rs/nice-win32-x64-msvc@1.0.4':
-    resolution: {integrity: sha512-kCNk6HcRZquhw/whwh4rHsdPyOSCQCgnVDVik+Y9cuSVTDy3frpiCJTScJqPPS872h4JgZKkr/+CwcwttNEo9Q==}
+  '@napi-rs/nice-win32-x64-msvc@1.1.1':
+    resolution: {integrity: sha512-vB+4G/jBQCAh0jelMTY3+kgFy00Hlx2f2/1zjMoH821IbplbWZOkLiTYXQkygNTzQJTq5cvwBDgn2ppHD+bglQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
@@ -555,8 +564,8 @@ packages:
     resolution: {integrity: sha512-zM0mVWSXE0a0h9aKACLwKmD6nHcRiKrPpCfvaKqG1CqDEyjEawId0ocXxVzPMCAm6kkWr2P025msfxXEnt8UGQ==}
     engines: {node: '>= 10'}
 
-  '@napi-rs/nice@1.0.4':
-    resolution: {integrity: sha512-Sqih1YARrmMoHlXGgI9JrrgkzxcaaEso0AH+Y7j8NHonUs+xe4iDsgC3IBIDNdzEewbNpccNN6hip+b5vmyRLw==}
+  '@napi-rs/nice@1.1.1':
+    resolution: {integrity: sha512-xJIPs+bYuc9ASBl+cvGsKbGrJmS6fAKaSZCnT0lhahT5rhA2VVy9/EcIgd2JhtEuFOJNx7UHNn/qiTPTY4nrQw==}
     engines: {node: '>= 10'}
 
   '@seald-io/binary-search-tree@1.0.3':
@@ -570,12 +579,6 @@ packages:
 
   '@types/cli-progress@3.11.6':
     resolution: {integrity: sha512-cE3+jb9WRlu+uOSAugewNpITJDt1VF8dHOopPO4IABFc3SXYL5WE/+PTz/FCdZRRfIujiWW3n3aMbv1eIGVRWA==}
-
-  '@types/hidefile@3.0.3':
-    resolution: {integrity: sha512-TxdhdUW4i3QdBXdF6ugJtXtb/JW9if2Jv9Gg+oUO1HZ45bAq03BVv8wjSwsGlC59MauQmW3VYrE82pi11PyPuQ==}
-
-  '@types/libsodium-wrappers@0.7.14':
-    resolution: {integrity: sha512-5Kv68fXuXK0iDuUir1WPGw2R9fOZUlYlSAa0ztMcL0s0BfIDTqg9GXz8K30VJpPP3sxWhbolnQma2x+/TfkzDQ==}
 
   '@types/node@24.0.0':
     resolution: {integrity: sha512-yZQa2zm87aRVcqDyH5+4Hv9KYgSdgwX1rFnGvpbzMaC7YAljmhBET93TPiTd3ObwTL+gSpIzPKg5BqVxdCvxKg==}
@@ -609,6 +612,25 @@ packages:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
 
+  bare-addon-resolve@1.9.6:
+    resolution: {integrity: sha512-hvOQY1zDK6u0rSr27T6QlULoVLwi8J2k8HHHJlxSfT7XQdQ/7bsS+AnjYkHtu/TkL+gm3aMXAKucJkJAbrDG/g==}
+    peerDependencies:
+      bare-url: '*'
+    peerDependenciesMeta:
+      bare-url:
+        optional: true
+
+  bare-module-resolve@1.12.0:
+    resolution: {integrity: sha512-JrzrqlC3Tds0iKRwQs8xIIJ+FRieKA9ll0jaqpotDLZtjJPVevzRoeuUYZ5GIo1t1z7/pIRdk85Q3i/2xQLfEQ==}
+    peerDependencies:
+      bare-url: '*'
+    peerDependenciesMeta:
+      bare-url:
+        optional: true
+
+  bare-semver@1.0.2:
+    resolution: {integrity: sha512-ESVaN2nzWhcI5tf3Zzcq9aqCZ676VWzqw07eEZ0qxAcEOAFYBa0pWq8sK34OQeHLY3JsfKXZS9mDyzyxGjeLzA==}
+
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
@@ -636,8 +658,8 @@ packages:
     resolution: {integrity: sha512-+ys997U96po4Kx/ABpBCqhA9EuxJaQWDQg7295H4hBphv3IZg0boBKuwYpt4YXp6MZ5AmZQnU/tyMTlRpaSejg==}
     engines: {node: '>= 0.4'}
 
-  chalk@5.4.1:
-    resolution: {integrity: sha512-zgVZuo2WcZgfUEmsn6eO3kINexW8RAE4maiQ8QNs8CtpPCSyMiYsULR3HQYkm3w8FIA3SberyMJMSldGsW+U3w==}
+  chalk@5.6.2:
+    resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
     engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
   chardet@0.7.0:
@@ -654,8 +676,8 @@ packages:
     resolution: {integrity: sha512-tRkV3HJ1ASwm19THiiLIXLO7Im7wlTuKnvkYaTkyoAPefqjNg7W7DHKUlGRxy9vxDvbyCYQkQozvptuMkGCg8A==}
     engines: {node: '>=4'}
 
-  cli-spinners@3.2.0:
-    resolution: {integrity: sha512-pXftdQloMZzjCr3pCTIRniDcys6dDzgpgVhAHHk6TKBDbRuP1MkuetTF5KSv4YUutbOPa7+7ZrAJ2kVtbMqyXA==}
+  cli-spinners@3.3.0:
+    resolution: {integrity: sha512-/+40ljC3ONVnYIttjMWrlL51nItDAbBrq2upN8BPyvGU/2n5Oxw3tbNwORCaNuNqLJnxGqOfjUuhsv7l5Q4IsQ==}
     engines: {node: '>=18.20'}
 
   cli-width@4.1.0:
@@ -771,12 +793,16 @@ packages:
     resolution: {integrity: sha512-Z4XaCL6dUDHfP/jT25jJKMmtxvuwbkrD1vNSMFlo9lNLY2c5FHYSQgHPRZUjAB26TpDEoW9HCOgplrdbaPV/ew==}
     engines: {node: '>=14.14'}
 
-  fswin@3.24.829:
-    resolution: {integrity: sha512-t3KHDNSMHbUzjpzb35c+27dGMLcE5gXvYZ4to5BITvCvPr3dZvX41VUzgEMQ8mVozbn5uiQ9p61/cQVLDEy+ag==}
+  fswin@3.25.1108:
+    resolution: {integrity: sha512-GyWixip07xo7+8oWheDynqdTn96h7W9Nlv6mHTK/jfDXAD+sSucWuqrk5mipLJKxe7vOsM22bisJPyGgLjdoIw==}
     engines: {node: '>= 8.0'}
 
   function-bind@1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
+
+  generator-function@2.0.1:
+    resolution: {integrity: sha512-SFdFmIJi+ybC0vjlHN0ZGVGHc3lgE0DxPAT0djjVg+kjOnSqclqmj0KQ7ykTOLP6YxoqOvuAODGdcHJn+43q3g==}
+    engines: {node: '>= 0.4'}
 
   get-caller-file@2.0.5:
     resolution: {integrity: sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==}
@@ -868,8 +894,8 @@ packages:
     resolution: {integrity: sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==}
     engines: {node: '>=8'}
 
-  is-generator-function@1.1.0:
-    resolution: {integrity: sha512-nPUB5km40q9e8UfN/Zc24eLlzdSf9OfKByBw9CIdw4H1giPMeA0OIJvbchsCu4npfI2QcMVBsGEBHKZ7wLTWmQ==}
+  is-generator-function@1.1.2:
+    resolution: {integrity: sha512-upqt1SkGkODW9tsGNG5mtXTXtECizwtS2kA161M+gJPc1xdb/Ax629af6YrTwcOeQHbewrPNlE5Dx7kzvXTizA==}
     engines: {node: '>= 0.4'}
 
   is-regex@1.2.1:
@@ -890,12 +916,6 @@ packages:
 
   jsonfile@6.1.0:
     resolution: {integrity: sha512-5dgndWOriYSm5cnYaJNhalLNDKOqFwyDB/rr1E9ZsGciGvKPs8R2xYGCacuf3z6K1YKDz182fd+fY3cn3pMqXQ==}
-
-  libsodium-wrappers@0.7.15:
-    resolution: {integrity: sha512-E4anqJQwcfiC6+Yrl01C1m8p99wEhLmJSs0VQqST66SbQXXBoaJY0pF4BNjRYa/sOQAxx6lXAaAFIlx+15tXJQ==}
-
-  libsodium@0.7.15:
-    resolution: {integrity: sha512-sZwRknt/tUpE2AwzHq3jEyUU5uvIZHtSssktXq7owd++3CSgn8RGrv6UZJJBpP7+iBghBqe7Z06/2M31rI2NKw==}
 
   lie@3.1.1:
     resolution: {integrity: sha512-RiNhHysUjhrDQntfYSfY4MU24coXXdEOgw9WGcKHNeEwffDYbF//u87M1EWaMGzuFoSbqW0C9C6lEEhDOAswfw==}
@@ -940,8 +960,8 @@ packages:
     resolution: {integrity: sha512-WWdIxpyjEn+FhQJQQv9aQAYlHoNVdzIzUySNV1gHUPDSdZJ3yZn7pAAbQcV7B56Mvu881q9FZV+0Vx2xC44VWA==}
     engines: {node: ^18.17.0 || >=20.5.0}
 
-  nanoid@5.1.5:
-    resolution: {integrity: sha512-Ir/+ZpE9fDsNH0hQ3C68uyThDXzYcim2EqcZ8zn8Chtt1iylPT9xXJB0kPCnqzgcEGikO9RxSrh63MsmVCU7Fw==}
+  nanoid@5.1.6:
+    resolution: {integrity: sha512-c7+7RQ+dMB5dPwwCp4ee1/iV/q2P6aK1mTZcfr1BTuVlyW9hJYiMPybJCcnBlQtuSmTIWNeazm/zqNoZSSElBg==}
     engines: {node: ^18 || >=20}
     hasBin: true
 
@@ -993,8 +1013,8 @@ packages:
     resolution: {integrity: sha512-R+arufwL7sZvGjAhSMK3TfH55YdGOqhpKXkcwQJr432AAnJX/xxX19PA4QisrmJ+BTTfZVggaz6HexbkQq1l1Q==}
     engines: {node: '>=18.x'}
 
-  piscina@5.1.3:
-    resolution: {integrity: sha512-0u3N7H4+hbr40KjuVn2uNhOcthu/9usKhnw5vT3J7ply79v3D3M8naI00el9Klcy16x557VsEkkUQaHCWFXC/g==}
+  piscina@5.1.4:
+    resolution: {integrity: sha512-7uU4ZnKeQq22t9AsmHGD2w4OYQGonwFnTypDypaWi7Qr2EvQIFVtG8J5D/3bE7W123Wdc9+v4CZDu5hJXVCtBg==}
     engines: {node: '>=20.x'}
 
   possible-typed-array-names@1.1.0:
@@ -1026,6 +1046,10 @@ packages:
   readable-stream@3.6.2:
     resolution: {integrity: sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA==}
     engines: {node: '>= 6'}
+
+  require-addon@1.2.0:
+    resolution: {integrity: sha512-VNPDZlYgIYQwWp9jMTzljx+k0ZtatKlcvOhktZ/anNPI3dQ9NXk7cq2U4iJ1wd9IrytRnYhyEocFWbkdPb+MYA==}
+    engines: {bare: '>=1.10.0'}
 
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
@@ -1074,6 +1098,10 @@ packages:
 
   simple-get@4.0.1:
     resolution: {integrity: sha512-brv7p5WgH0jmQJr1ZDDfKDOSeWWg+OVypG99A/5vYGPqJ6pxiaHLy8nxtFjBA7oMa01ebA9gfh1uMCFqOuXxvA==}
+
+  sodium-native@5.0.10:
+    resolution: {integrity: sha512-UIw+0AbpCQRuTJF88JWrZomP4O+PXhlWvdopiAJOsUivTyHTf3korMyStxkZuPngSbBEtEfDdc4ewEd8/T4/lA==}
+    engines: {bare: '>=1.16.0'}
 
   stream-meter@1.0.4:
     resolution: {integrity: sha512-4sOEtrbgFotXwnEuzzsQBYEV1elAeFSO8rSGeTwabuX1RRn/kEq9JVH7I0MRBhKVRR0sJkr0M0QCH7yOLf9fhQ==}
@@ -1159,6 +1187,9 @@ packages:
   whatwg-url@5.0.0:
     resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
 
+  which-runtime@1.3.2:
+    resolution: {integrity: sha512-5kwCfWml7+b2NO7KrLMhYihjRx0teKkd3yGp1Xk5Vaf2JGdSh+rgVhEALAD9c/59dP+YwJHXoEO7e8QPy7gOkw==}
+
   which-typed-array@1.1.19:
     resolution: {integrity: sha512-rEvr90Bck4WZt9HHFC4DJMsjvu7x+r6bImz0/BrbWb7A2djJ8hnZMrWnHo9F8ssv0OMErasDhftrfROTyqSDrw==}
     engines: {node: '>= 0.4'}
@@ -1194,8 +1225,8 @@ packages:
     resolution: {integrity: sha512-D1mvvtDG0L5ft/jGWkLpG1+m0eQxOfaBvTNELraWj22wSVUMWxZUvYgJYcKh6jGGIkJFhH4IZPQhR4TKpc8mBw==}
     engines: {node: '>=10'}
 
-  yocto-queue@1.2.1:
-    resolution: {integrity: sha512-AyeEbWOu/TAXdxlV9wmGcR0+yh2j3vYPGOECcIj2S7MkrLyC7ne+oye2BKTItt0ii2PHk4cDy+95+LshzbXnGg==}
+  yocto-queue@1.2.2:
+    resolution: {integrity: sha512-4LCcse/U2MHZ63HAJVE+v71o7yOdIe4cZ70Wpf8D/IyjDKYQLV5GD46B+hSTjJsvV5PztjvHoU580EftxjDZFQ==}
     engines: {node: '>=12.20'}
 
   yoctocolors-cjs@2.1.2:
@@ -1210,19 +1241,19 @@ snapshots:
   '@akira-encryptor/core@file:../core/akira-encryptor-core-0.5.0-beta.tgz(typescript@5.8.3)':
     dependencies:
       '@seald-io/nedb': 4.1.2
-      '@types/hidefile': 3.0.3
-      '@types/libsodium-wrappers': 0.7.14
-      chalk: 5.4.1
-      cli-spinners: 3.2.0
+      chalk: 5.6.2
+      cli-spinners: 3.3.0
       dotenv: 16.6.1
       filesize-parser: 1.5.1
       hidefile: 3.0.0
-      libsodium-wrappers: 0.7.15
-      nanoid: 5.1.5
+      nanoid: 5.1.6
       p-limit: 6.2.0
-      piscina: 5.1.3
+      piscina: 5.1.4
+      sodium-native: 5.0.10
       typescript: 5.8.3
       zod: 3.25.76
+    transitivePeerDependencies:
+      - bare-url
 
   '@babel/generator@7.27.5':
     dependencies:
@@ -1460,97 +1491,100 @@ snapshots:
   '@napi-rs/nice-android-arm-eabi@1.0.1':
     optional: true
 
-  '@napi-rs/nice-android-arm-eabi@1.0.4':
+  '@napi-rs/nice-android-arm-eabi@1.1.1':
     optional: true
 
   '@napi-rs/nice-android-arm64@1.0.1':
     optional: true
 
-  '@napi-rs/nice-android-arm64@1.0.4':
+  '@napi-rs/nice-android-arm64@1.1.1':
     optional: true
 
   '@napi-rs/nice-darwin-arm64@1.0.1':
     optional: true
 
-  '@napi-rs/nice-darwin-arm64@1.0.4':
+  '@napi-rs/nice-darwin-arm64@1.1.1':
     optional: true
 
   '@napi-rs/nice-darwin-x64@1.0.1':
     optional: true
 
-  '@napi-rs/nice-darwin-x64@1.0.4':
+  '@napi-rs/nice-darwin-x64@1.1.1':
     optional: true
 
   '@napi-rs/nice-freebsd-x64@1.0.1':
     optional: true
 
-  '@napi-rs/nice-freebsd-x64@1.0.4':
+  '@napi-rs/nice-freebsd-x64@1.1.1':
     optional: true
 
   '@napi-rs/nice-linux-arm-gnueabihf@1.0.1':
     optional: true
 
-  '@napi-rs/nice-linux-arm-gnueabihf@1.0.4':
+  '@napi-rs/nice-linux-arm-gnueabihf@1.1.1':
     optional: true
 
   '@napi-rs/nice-linux-arm64-gnu@1.0.1':
     optional: true
 
-  '@napi-rs/nice-linux-arm64-gnu@1.0.4':
+  '@napi-rs/nice-linux-arm64-gnu@1.1.1':
     optional: true
 
   '@napi-rs/nice-linux-arm64-musl@1.0.1':
     optional: true
 
-  '@napi-rs/nice-linux-arm64-musl@1.0.4':
+  '@napi-rs/nice-linux-arm64-musl@1.1.1':
     optional: true
 
   '@napi-rs/nice-linux-ppc64-gnu@1.0.1':
     optional: true
 
-  '@napi-rs/nice-linux-ppc64-gnu@1.0.4':
+  '@napi-rs/nice-linux-ppc64-gnu@1.1.1':
     optional: true
 
   '@napi-rs/nice-linux-riscv64-gnu@1.0.1':
     optional: true
 
-  '@napi-rs/nice-linux-riscv64-gnu@1.0.4':
+  '@napi-rs/nice-linux-riscv64-gnu@1.1.1':
     optional: true
 
   '@napi-rs/nice-linux-s390x-gnu@1.0.1':
     optional: true
 
-  '@napi-rs/nice-linux-s390x-gnu@1.0.4':
+  '@napi-rs/nice-linux-s390x-gnu@1.1.1':
     optional: true
 
   '@napi-rs/nice-linux-x64-gnu@1.0.1':
     optional: true
 
-  '@napi-rs/nice-linux-x64-gnu@1.0.4':
+  '@napi-rs/nice-linux-x64-gnu@1.1.1':
     optional: true
 
   '@napi-rs/nice-linux-x64-musl@1.0.1':
     optional: true
 
-  '@napi-rs/nice-linux-x64-musl@1.0.4':
+  '@napi-rs/nice-linux-x64-musl@1.1.1':
+    optional: true
+
+  '@napi-rs/nice-openharmony-arm64@1.1.1':
     optional: true
 
   '@napi-rs/nice-win32-arm64-msvc@1.0.1':
     optional: true
 
-  '@napi-rs/nice-win32-arm64-msvc@1.0.4':
+  '@napi-rs/nice-win32-arm64-msvc@1.1.1':
     optional: true
 
   '@napi-rs/nice-win32-ia32-msvc@1.0.1':
     optional: true
 
-  '@napi-rs/nice-win32-ia32-msvc@1.0.4':
+  '@napi-rs/nice-win32-ia32-msvc@1.1.1':
     optional: true
 
   '@napi-rs/nice-win32-x64-msvc@1.0.1':
     optional: true
 
-  '@napi-rs/nice-win32-x64-msvc@1.0.4':
+  '@napi-rs/nice-win32-x64-msvc@1.1.1':
     optional: true
 
   '@napi-rs/nice@1.0.1':
@@ -1573,24 +1607,25 @@ snapshots:
       '@napi-rs/nice-win32-x64-msvc': 1.0.1
     optional: true
 
-  '@napi-rs/nice@1.0.4':
+  '@napi-rs/nice@1.1.1':
     optionalDependencies:
-      '@napi-rs/nice-android-arm-eabi': 1.0.4
-      '@napi-rs/nice-android-arm64': 1.0.4
-      '@napi-rs/nice-darwin-arm64': 1.0.4
-      '@napi-rs/nice-darwin-x64': 1.0.4
-      '@napi-rs/nice-freebsd-x64': 1.0.4
-      '@napi-rs/nice-linux-arm-gnueabihf': 1.0.4
-      '@napi-rs/nice-linux-arm64-gnu': 1.0.4
-      '@napi-rs/nice-linux-arm64-musl': 1.0.4
-      '@napi-rs/nice-linux-ppc64-gnu': 1.0.4
-      '@napi-rs/nice-linux-riscv64-gnu': 1.0.4
-      '@napi-rs/nice-linux-s390x-gnu': 1.0.4
-      '@napi-rs/nice-linux-x64-gnu': 1.0.4
-      '@napi-rs/nice-linux-x64-musl': 1.0.4
-      '@napi-rs/nice-win32-arm64-msvc': 1.0.4
-      '@napi-rs/nice-win32-ia32-msvc': 1.0.4
-      '@napi-rs/nice-win32-x64-msvc': 1.0.4
+      '@napi-rs/nice-android-arm-eabi': 1.1.1
+      '@napi-rs/nice-android-arm64': 1.1.1
+      '@napi-rs/nice-darwin-arm64': 1.1.1
+      '@napi-rs/nice-darwin-x64': 1.1.1
+      '@napi-rs/nice-freebsd-x64': 1.1.1
+      '@napi-rs/nice-linux-arm-gnueabihf': 1.1.1
+      '@napi-rs/nice-linux-arm64-gnu': 1.1.1
+      '@napi-rs/nice-linux-arm64-musl': 1.1.1
+      '@napi-rs/nice-linux-ppc64-gnu': 1.1.1
+      '@napi-rs/nice-linux-riscv64-gnu': 1.1.1
+      '@napi-rs/nice-linux-s390x-gnu': 1.1.1
+      '@napi-rs/nice-linux-x64-gnu': 1.1.1
+      '@napi-rs/nice-linux-x64-musl': 1.1.1
+      '@napi-rs/nice-openharmony-arm64': 1.1.1
+      '@napi-rs/nice-win32-arm64-msvc': 1.1.1
+      '@napi-rs/nice-win32-ia32-msvc': 1.1.1
+      '@napi-rs/nice-win32-x64-msvc': 1.1.1
     optional: true
 
   '@seald-io/binary-search-tree@1.0.3': {}
@@ -1608,12 +1643,6 @@ snapshots:
   '@types/cli-progress@3.11.6':
     dependencies:
       '@types/node': 24.0.0
-
-  '@types/hidefile@3.0.3':
-    dependencies:
-      '@types/node': 24.0.0
-
-  '@types/libsodium-wrappers@0.7.14': {}
 
   '@types/node@24.0.0':
     dependencies:
@@ -1673,6 +1702,17 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.1.0
 
+  bare-addon-resolve@1.9.6:
+    dependencies:
+      bare-module-resolve: 1.12.0
+      bare-semver: 1.0.2
+
+  bare-module-resolve@1.12.0:
+    dependencies:
+      bare-semver: 1.0.2
+
+  bare-semver@1.0.2: {}
+
   base64-js@1.5.1: {}
 
   bl@4.1.0:
@@ -1709,7 +1749,7 @@ snapshots:
       call-bind-apply-helpers: 1.0.2
       get-intrinsic: 1.3.0
 
-  chalk@5.4.1: {}
+  chalk@5.6.2: {}
 
   chardet@0.7.0: {}
 
@@ -1721,7 +1761,7 @@ snapshots:
     dependencies:
       string-width: 4.2.3
 
-  cli-spinners@3.2.0: {}
+  cli-spinners@3.3.0: {}
 
   cli-width@4.1.0: {}
 
@@ -1844,9 +1884,11 @@ snapshots:
       jsonfile: 6.1.0
       universalify: 2.0.1
 
-  fswin@3.24.829: {}
+  fswin@3.25.1108: {}
 
   function-bind@1.1.2: {}
+
+  generator-function@2.0.1: {}
 
   get-caller-file@2.0.5: {}
 
@@ -1941,9 +1983,10 @@ snapshots:
 
   is-fullwidth-code-point@3.0.0: {}
 
-  is-generator-function@1.1.0:
+  is-generator-function@1.1.2:
     dependencies:
       call-bound: 1.0.4
+      generator-function: 2.0.1
       get-proto: 1.0.1
       has-tostringtag: 1.0.2
       safe-regex-test: 1.1.0
@@ -1968,12 +2011,6 @@ snapshots:
       universalify: 2.0.1
     optionalDependencies:
       graceful-fs: 4.2.11
-
-  libsodium-wrappers@0.7.15:
-    dependencies:
-      libsodium: 0.7.15
-
-  libsodium@0.7.15: {}
 
   lie@3.1.1:
     dependencies:
@@ -2008,7 +2045,7 @@ snapshots:
 
   mute-stream@2.0.0: {}
 
-  nanoid@5.1.5: {}
+  nanoid@5.1.6: {}
 
   napi-build-utils@2.0.0: {}
 
@@ -2032,7 +2069,7 @@ snapshots:
 
   p-limit@6.2.0:
     dependencies:
-      yocto-queue: 1.2.1
+      yocto-queue: 1.2.2
 
   path-parse@1.0.7: {}
 
@@ -2044,9 +2081,9 @@ snapshots:
     optionalDependencies:
       '@napi-rs/nice': 1.0.1
 
-  piscina@5.1.3:
+  piscina@5.1.4:
     optionalDependencies:
-      '@napi-rs/nice': 1.0.4
+      '@napi-rs/nice': 1.1.1
 
   possible-typed-array-names@1.1.0: {}
 
@@ -2097,6 +2134,12 @@ snapshots:
       string_decoder: 1.3.0
       util-deprecate: 1.0.2
 
+  require-addon@1.2.0:
+    dependencies:
+      bare-addon-resolve: 1.9.6
+    transitivePeerDependencies:
+      - bare-url
+
   require-directory@2.1.1: {}
 
   resolve@1.22.10:
@@ -2143,6 +2186,13 @@ snapshots:
       decompress-response: 6.0.0
       once: 1.4.0
       simple-concat: 1.0.1
+
+  sodium-native@5.0.10:
+    dependencies:
+      require-addon: 1.2.0
+      which-runtime: 1.3.2
+    transitivePeerDependencies:
+      - bare-url
 
   stream-meter@1.0.4:
     dependencies:
@@ -2233,7 +2283,7 @@ snapshots:
     dependencies:
       inherits: 2.0.4
       is-arguments: 1.2.0
-      is-generator-function: 1.1.0
+      is-generator-function: 1.1.2
       is-typed-array: 1.1.15
       which-typed-array: 1.1.19
 
@@ -2243,6 +2293,8 @@ snapshots:
     dependencies:
       tr46: 0.0.3
       webidl-conversions: 3.0.1
+
+  which-runtime@1.3.2: {}
 
   which-typed-array@1.1.19:
     dependencies:
@@ -2256,7 +2308,7 @@ snapshots:
 
   winattr@3.0.0:
     dependencies:
-      fswin: 3.24.829
+      fswin: 3.25.1108
 
   wrap-ansi@6.2.0:
     dependencies:
@@ -2288,7 +2340,7 @@ snapshots:
       y18n: 5.0.8
       yargs-parser: 20.2.9
 
-  yocto-queue@1.2.1: {}
+  yocto-queue@1.2.2: {}
 
   yoctocolors-cjs@2.1.2: {}
 

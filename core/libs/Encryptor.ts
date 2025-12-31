@@ -1,18 +1,24 @@
+import type { StructuredSerializeOptions } from "worker_threads";
 import type { Internal, Types } from "../types";
+
+import generateSecretKey from "../crypto/generateSecretKey";
 import { MessageChannel } from "worker_threads";
 import encryptText from "../crypto/encryptText";
 import decryptText from "../crypto/decryptText";
 import { FileSystem } from "./FileSystem";
 import * as utils from "../utils/index";
-import sodium from "libsodium-wrappers";
 import { env } from "../configs/env";
 import parser from "filesize-parser";
+import sodium from "sodium-native";
 import Storage from "./Storage";
 import hidefile from "hidefile";
 import Piscina from "piscina";
 import pLimit from "p-limit";
 import { tmpdir } from "os";
 import path from "path";
+
+type MessageType = "progress" | "done" | "error";
+type Message = { type: MessageType; [x: string]: any };
 
 class Encryptor {
   private static workerPool: Piscina<Types.WorkerTask, void>;
@@ -22,7 +28,10 @@ class Encryptor {
   private DEFAULT_STEP_DELAY!: number;
   private ALLOW_EXTRA_PROPS!: boolean;
   private static STORAGE: Storage;
-  private SECRET_KEY: Uint8Array;
+  /**
+   * Should be used as Uint8Array viewing a SharedArrayBuffer.
+   */
+  private readonly SECRET_KEY: Uint8Array;
   private MAX_THREADS!: number;
   private LOG: boolean = false;
   private workerPath!: string;
@@ -40,8 +49,11 @@ class Encryptor {
   private totalFolderBytes = 0;
   private processedBytes = 0;
 
-  private constructor(password: string) {
-    this.SECRET_KEY = utils.generateSecretKey(password);
+  private constructor(password: Buffer) {
+    const tmp = generateSecretKey(password);
+    const sab = new SharedArrayBuffer(tmp.length); // Create SharedArrayBuffer
+    this.SECRET_KEY = new Uint8Array(sab); // Create Uint8Array with underlying SharedArrayBuffer
+    this.SECRET_KEY.set(tmp);
   }
 
   /**
@@ -52,22 +64,20 @@ class Encryptor {
    * @see See the root `package.json` for worker paths.
    */
   static async init(
-    password: string,
+    password: Buffer,
     workerPath: string,
     options?: Types.EncryptorOptions
   ): Promise<Encryptor>;
   static async init(
-    password: string,
+    password: Buffer,
     workerPath?: undefined,
     options?: Types.EncryptorOptions
   ): Promise<Types.BasicEncryptor>;
   static async init(
-    password: string,
+    password: Buffer,
     workerPath?: string,
     options?: Types.EncryptorOptions
   ): Promise<Encryptor | Types.BasicEncryptor> {
-    await sodium.ready;
-
     const instance = new Encryptor(password);
     instance.DEFAULT_STEP_DELAY = options?.minDelayPerStep || 300;
     instance.ALLOW_EXTRA_PROPS = options?.allowExtraProps || false;
@@ -78,17 +88,18 @@ class Encryptor {
     instance.SILENT = options?.silent || false;
 
     Encryptor.STORAGE = new Storage(
-      instance.SECRET_KEY,
+      instance.SECRET_KEY as Buffer,
       instance.ENCODING,
-      options?.libraryPath
+      options?.dbPath
     );
+    await Encryptor.STORAGE.ready;
 
     if (!workerPath) {
       return {
         getStorage: instance.getStorage,
         refreshStorage: instance.refreshStorage,
         revealStoredItem: instance.revealStoredItem.bind(instance),
-        hideStoredItem: instance.hideStoredItem.bind(instance)
+        hideStoredItem: instance.hideStoredItem.bind(instance),
       };
     }
 
@@ -111,7 +122,7 @@ class Encryptor {
         concurrentTasksPerWorker: 1,
         filename: this.workerPath,
         idleTimeout: 30000,
-        minThreads: 1
+        minThreads: 1,
       });
     }
   }
@@ -209,6 +220,8 @@ class Encryptor {
    * @description `[ES]` Cifra un archivo utilizando la clave secreta y lo guarda con un nuevo nombre.
    */
   async encryptFile(props: Types.FileEncryptor) {
+    await Encryptor.STORAGE.ready; // Ensure storage is ready
+
     const stats = Encryptor.FS.getStatFile(props.filePath);
     if (!stats.isFile()) {
       return Promise.reject(
@@ -218,7 +231,7 @@ class Encryptor {
 
     return this._encryptFile({
       ...props,
-      isInternalFlow: false
+      isInternalFlow: false,
     });
   }
   private async _encryptFile(props: Internal.FileEncryptor) {
@@ -251,46 +264,63 @@ class Encryptor {
     );
 
     const channel = new MessageChannel();
+    let handler: undefined | ((m: Message) => void);
     try {
-      channel.port2.on(
-        "message",
-        (message: { type: string; [x: string]: any }) => {
-          switch (message.type) {
-            case "progress": {
-              const { processedBytes } = message;
-              this.processedBytes += processedBytes;
-              onProgress?.(this.processedBytes, totalFileSize);
-              break;
+      const messagePromise = new Promise<void>((resolve, reject) => {
+        handler = (message) => {
+          try {
+            switch (message.type) {
+              case "progress": {
+                const { processedBytes } = message;
+                this.processedBytes += processedBytes;
+                onProgress?.(this.processedBytes, totalFileSize);
+                break;
+              }
+
+              case "error": {
+                channel.port2.close();
+                reject(new Error(message.error));
+                break;
+              }
+
+              case "done": {
+                resolve();
+                break;
+              }
+
+              default:
+                console.warn("Unknown message type:", message);
             }
-            case "error": {
-              const error = new Error(message.error);
-              channel.port2.close();
-              throw error;
-            }
-            default:
-              console.warn("Unknown message type:", message);
+          } catch (err) {
+            reject(err as Error);
           }
-        }
-      );
+        };
+
+        // Register handler
+        channel.port2.on("message", handler);
+      });
 
       if (!Encryptor.workerPool) {
         this.startWorkerPool();
       }
 
-      await Encryptor.workerPool.run(
-        {
-          SECRET_KEY: this.SECRET_KEY,
-          blockSize: this.chunkSize,
-          enableLogging: this.LOG,
-          taskType: "encrypt",
-          port: channel.port1,
-          tempPath,
-          filePath
-        },
-        {
-          transferList: [channel.port1]
-        }
-      );
+      await Promise.race([
+        Encryptor.workerPool.run(
+          {
+            SECRET_KEY: this.SECRET_KEY,
+            blockSize: this.chunkSize,
+            enableLogging: this.LOG,
+            taskType: "encrypt",
+            port: channel.port1,
+            tempPath,
+            filePath,
+          },
+          {
+            transferList: [channel.port1] as StructuredSerializeOptions,
+          }
+        ),
+        messagePromise,
+      ]);
 
       const fileItem = (await this.onEncryptWriteStreamFinish({
         isInternalFlow: !!isInternalFlow,
@@ -299,7 +329,7 @@ class Encryptor {
         fileBaseName,
         fileStats,
         fileDir,
-        filePath
+        filePath,
       })) as Types.FileItem;
 
       return Promise.resolve(fileItem);
@@ -307,11 +337,17 @@ class Encryptor {
       error = err as Error;
       return Promise.reject(err);
     } finally {
+      // Clean up message handler
+      handler && channel.port2.removeListener("message", handler);
+
+      // Close ports
       channel.port1.close();
       channel.port2.close();
+
+      // Call onEnd callback
       if (props.onEnd) props.onEnd(error);
       if (!isInternalFlow) {
-        await this.destroy();
+        await this.destroy(); // Destroy worker pool if not in internal flow
       }
     }
   }
@@ -321,6 +357,8 @@ class Encryptor {
    * @description `[ES]` Descifra un archivo utilizando la clave secreta y lo guarda con el nombre original.
    */
   async decryptFile(props: Types.FileDecryptor) {
+    await Encryptor.STORAGE.ready; // Ensure storage is ready
+
     const stats = Encryptor.FS.getStatFile(props.filePath);
     if (!stats.isFile()) {
       return Promise.reject(
@@ -330,7 +368,7 @@ class Encryptor {
 
     return this._decryptFile({
       ...props,
-      isInternalFlow: false
+      isInternalFlow: false,
     });
   }
   private async _decryptFile(props: Internal.FileDecryptor) {
@@ -353,46 +391,63 @@ class Encryptor {
     );
 
     const channel = new MessageChannel();
+    let handler: undefined | ((m: Message) => void);
     try {
-      channel.port2.on(
-        "message",
-        (message: { type: string; [x: string]: any }) => {
-          switch (message.type) {
-            case "progress": {
-              const { processedBytes } = message;
-              this.processedBytes += processedBytes;
-              onProgress?.(this.processedBytes, totalFileSize);
-              break;
+      const messagePromise = new Promise<void>((resolve, reject) => {
+        handler = (message) => {
+          try {
+            switch (message.type) {
+              case "progress": {
+                const { processedBytes } = message;
+                this.processedBytes += processedBytes;
+                onProgress?.(this.processedBytes, totalFileSize);
+                break;
+              }
+
+              case "error": {
+                channel.port2.close();
+                reject(new Error(message.error));
+                break;
+              }
+
+              case "done": {
+                resolve();
+                break;
+              }
+
+              default:
+                console.warn("Unknown message type:", message);
             }
-            case "error": {
-              const error = new Error(message.error);
-              channel.port2.close();
-              throw error;
-            }
-            default:
-              console.warn("Unknown message type:", message);
+          } catch (err) {
+            reject(err as Error);
           }
-        }
-      );
+        };
+
+        // Register handler
+        channel.port2.on("message", handler);
+      });
 
       if (!Encryptor.workerPool) {
         this.startWorkerPool();
       }
 
-      await Encryptor.workerPool.run(
-        {
-          filePath: filePath,
-          SECRET_KEY: this.SECRET_KEY,
-          enableLogging: this.LOG,
-          port: channel.port1,
-          taskType: "decrypt",
-          blockSize,
-          tempPath
-        },
-        {
-          transferList: [channel.port1]
-        }
-      );
+      await Promise.race([
+        Encryptor.workerPool.run(
+          {
+            filePath: filePath,
+            SECRET_KEY: this.SECRET_KEY,
+            enableLogging: this.LOG,
+            port: channel.port1,
+            taskType: "decrypt",
+            blockSize,
+            tempPath,
+          },
+          {
+            transferList: [channel.port1] as StructuredSerializeOptions,
+          }
+        ),
+        messagePromise,
+      ]);
 
       const outPath = isInternalFlow && fileItem ? fileItem.path : undefined;
       await this.onDecryptWriteStreamFinish({
@@ -400,7 +455,7 @@ class Encryptor {
         folderPath: filePath,
         fileItem,
         outPath,
-        tempPath
+        tempPath,
       });
 
       return Promise.resolve();
@@ -408,11 +463,17 @@ class Encryptor {
       error = err as Error;
       return Promise.reject(err);
     } finally {
-      channel.port1.close();
+      // Clean up message handler
+      handler && channel.port2.removeListener("message", handler);
+
+      // Close ports
+      channel.port1?.close();
       channel.port2.close();
+
+      // Call onEnd callback
       if (props.onEnd) props.onEnd(error);
       if (!isInternalFlow) {
-        await this.destroy();
+        await this.destroy(); // Destroy worker pool if not in internal flow
       }
     }
   }
@@ -422,6 +483,8 @@ class Encryptor {
    * @description `[ES]` Cifra recursivamente todos los archivos dentro de una carpeta.
    */
   async encryptFolder(props: Types.FolderEncryptor) {
+    await Encryptor.STORAGE.ready; // Ensure storage is ready
+
     const stats = Encryptor.FS.getStatFile(props.folderPath);
     if (stats.isFile()) {
       return Promise.reject(
@@ -431,7 +494,7 @@ class Encryptor {
 
     return this._encryptFolder({
       ...props,
-      isInternalFlow: false
+      isInternalFlow: false,
     });
   }
   private async _encryptFolder(props: Internal.FolderEncryptor) {
@@ -487,7 +550,7 @@ class Encryptor {
             isInternalFlow: true,
             folderPath: path.join(folderPath, entry.name),
             tempPath: path.join(tempPath, entry.name),
-            onProgress
+            onProgress,
           });
         });
         subfolderPromises.push(subfolderTask);
@@ -526,7 +589,7 @@ class Encryptor {
               isInternalFlow: true,
               onProgress: () => {
                 onProgress?.(this.processedBytes, this.totalFolderBytes);
-              }
+              },
             });
             subFile.path = subFile.path.replace(tempPath, folderPath);
             return subFile;
@@ -555,15 +618,15 @@ class Encryptor {
     // --------------------
     const content: (Types.FileItem | Types.FolderItem)[] = [
       ...subfolders,
-      ...files
+      ...files,
     ];
 
     // --------------------
     // PHASE D: Encrypt current folder’s name & register
     // --------------------
-    const encryptedName = await encryptText(
+    const encryptedName = encryptText(
       baseName,
-      this.SECRET_KEY,
+      this.SECRET_KEY as Buffer,
       this.ENCODING
     );
     let saved: Types.StorageItem = {
@@ -574,7 +637,7 @@ class Encryptor {
       path: folderPath,
       type: "folder",
       encryptedName,
-      content
+      content,
     };
 
     if (!isInternalFlow) {
@@ -598,7 +661,7 @@ class Encryptor {
       // Save to storage, then mark spinner as succeeded
       await Promise.all([
         Encryptor.STORAGE.set(saved),
-        utils.delay(this.stepDelay)
+        utils.delay(this.stepDelay),
       ]).then(([storageItem]) => {
         saved = storageItem;
         this.saveStep?.succeed("Carpeta encriptada registrada correctamente.");
@@ -652,6 +715,8 @@ class Encryptor {
    * @description `[ES]` Descifra recursivamente todos los archivos dentro de una carpeta.
    */
   async decryptFolder(props: Types.FolderDecryptor) {
+    await Encryptor.STORAGE.ready; // Ensure storage is ready
+
     const stats = Encryptor.FS.getStatFile(props.folderPath);
     if (stats.isFile()) {
       return Promise.reject(
@@ -661,7 +726,7 @@ class Encryptor {
 
     return this._decryptFolder({
       ...props,
-      isInternalFlow: false
+      isInternalFlow: false,
     });
   }
   private async _decryptFolder(props: Internal.FolderDecryptor) {
@@ -706,7 +771,7 @@ class Encryptor {
             folderPath: fullPath,
             isInternalFlow: true,
             folderItem: item,
-            onProgress
+            onProgress,
           });
         });
         subfolderPromises.push(task);
@@ -733,7 +798,7 @@ class Encryptor {
               fileItem: item,
               onProgress: () => {
                 onProgress?.(this.processedBytes, this.totalFolderBytes);
-              }
+              },
             });
           } catch (err) {
             // Only skip if error indicates file was not registered
@@ -756,7 +821,7 @@ class Encryptor {
     // --------------------
     const originalName = decryptText(
       currentFolder.encryptedName,
-      this.SECRET_KEY,
+      this.SECRET_KEY as Buffer,
       this.ENCODING
     );
 
@@ -831,9 +896,9 @@ class Encryptor {
         throw new Error("No se pudo obtener la ruta temporal del archivo.");
       }
 
-      const encryptedName = await encryptText(
+      const encryptedName = encryptText(
         fileBaseName,
-        this.SECRET_KEY,
+        this.SECRET_KEY as Buffer,
         this.ENCODING
       );
       savedItem = {
@@ -843,7 +908,7 @@ class Encryptor {
         size: fileStats.size,
         encryptedAt: new Date(),
         _id: utils.generateUID(),
-        type: "file"
+        type: "file",
       };
       if (!props.isInternalFlow) {
         if (!this.SILENT) {
@@ -862,7 +927,7 @@ class Encryptor {
         }
         await Promise.all([
           Encryptor.STORAGE.set(savedItem),
-          utils.delay(this.stepDelay)
+          utils.delay(this.stepDelay),
         ]).then(([storageItem]) => {
           this.saveStep?.succeed(
             "Archivo encriptado registrado correctamente."
@@ -882,7 +947,7 @@ class Encryptor {
       }
       await Promise.all([
         Encryptor.FS.safeRename(tempPath, renamedTempFile),
-        utils.delay(this.stepDelay)
+        utils.delay(this.stepDelay),
       ]).then(() => {
         this.renameStep?.succeed(
           "Archivo encriptado renombrado correctamente."
@@ -895,7 +960,7 @@ class Encryptor {
       }
       await Promise.all([
         Encryptor.FS.copyItem(renamedTempFile, destPath),
-        utils.delay(this.stepDelay)
+        utils.delay(this.stepDelay),
       ]).then(() => {
         this.copyStep?.succeed("Archivo encriptado movido correctamente.");
       });
@@ -907,7 +972,7 @@ class Encryptor {
       await Promise.all([
         Encryptor.FS.removeItem(filePath),
         Encryptor.FS.removeItem(renamedTempFile),
-        utils.delay(this.stepDelay)
+        utils.delay(this.stepDelay),
       ]).then(() => {
         this.removeStep?.succeed("Archivo original eliminado correctamente.");
       });
@@ -969,7 +1034,7 @@ class Encryptor {
       }
       await Promise.all([
         Encryptor.FS.replaceFile(tempPath, restoredPath, inputBuffer),
-        utils.delay(this.stepDelay)
+        utils.delay(this.stepDelay),
       ]).then(() => {
         this.renameStep?.succeed("Archivo original reemplazado correctamente.");
       });
@@ -982,7 +1047,7 @@ class Encryptor {
         }
         await Promise.all([
           Encryptor.FS.removeItem(folderPath),
-          utils.delay(this.stepDelay)
+          utils.delay(this.stepDelay),
         ]).then(() => {
           this.removeStep?.succeed("Archivo temporal eliminado correctamente.");
         });
@@ -996,7 +1061,7 @@ class Encryptor {
         }
         await Promise.all([
           Encryptor.STORAGE.delete(fileName),
-          utils.delay(this.stepDelay)
+          utils.delay(this.stepDelay),
         ]).then(() => {
           this.saveStep?.succeed("Archivo eliminado del registro.");
         });

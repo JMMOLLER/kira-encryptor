@@ -1,14 +1,20 @@
 import { FileSystem } from "../libs/FileSystem";
 import { pipeline, Transform } from "stream";
+import deriveFileKey from "./deriveFileKey";
 import encryptChunk from "./encryptChunk";
+import generateSalt from "./generateSalt";
 import type { WriteStream } from "fs";
+import sodium from "sodium-native";
 import { promisify } from "util";
 
 interface FileEncryptionProps {
   filePath: Readonly<string>;
+  /**
+   * `processedBytes` - Number of bytes processed so far.
+   */
   onProgress: (processedBytes: number) => void;
   enableLogging?: boolean;
-  SECRET_KEY: Uint8Array;
+  SECRET_KEY: Buffer;
   blockSize: number;
   tempPath: string;
 }
@@ -26,12 +32,32 @@ const FS = FileSystem.getInstance();
 async function encryptFile(props: FileEncryptionProps): Promise<void> {
   const { filePath, onProgress, tempPath, SECRET_KEY, blockSize } = props;
 
+  const salt = generateSalt(); // 16 bytes
+  const fileKey = deriveFileKey(SECRET_KEY, salt); // Buffer(32)
+
+  // Prepara header
+  const headerObj = {
+    kdf: sodium.crypto_pwhash_ALG_ARGON2ID13,
+    salt: Buffer.from(salt).toString("hex"),
+    opslimit: sodium.crypto_pwhash_OPSLIMIT_MODERATE,
+    memlimit: sodium.crypto_pwhash_MEMLIMIT_MODERATE,
+    version: 1
+  };
+  const headerJson = Buffer.from(JSON.stringify(headerObj), "utf8");
+  const magic = Buffer.from("AKRA"); // 4 bytes
+  const version = Buffer.from([0x01]); // 1 byte
+  const headerLen = Buffer.alloc(4);
+  headerLen.writeUInt32BE(headerJson.length, 0);
+
   // Streams for reading and writing file
   const rs = FS.createReadStream(filePath, { highWaterMark: blockSize });
   const ws = FS.createWriteStream(tempPath, { highWaterMark: blockSize });
 
+  // Write header to the beginning of the file
+  ws.write(Buffer.concat([magic, version, headerLen, headerJson]));
+
   // If logging is enabled, create a write stream for logging
-  let log: WriteStream | null = null;
+  let log: WriteStream | undefined;
   let chunkCount = 0;
   if (props.enableLogging) {
     log = FS.createWriteStream(filePath + ".enc.log");
@@ -50,11 +76,11 @@ async function encryptFile(props: FileEncryptionProps): Promise<void> {
           : Buffer.from(chunk as string);
 
         // Encrypt the chunk
-        const encryptedChunk = await encryptChunk({
-          log: log || undefined,
+        const encryptedChunk = encryptChunk({
+          log,
           chunk: chunkBuf,
           id: chunkCount,
-          SECRET_KEY
+          SECRET_KEY: fileKey
         });
 
         // Send the progress

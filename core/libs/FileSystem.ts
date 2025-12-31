@@ -62,6 +62,21 @@ export class FileSystem {
   }
 
   /**
+   * @description `[ENG]` Create a file in the filesystem.
+   * @description `[ESP]` Crea un archivo en el sistema de archivos.
+   * @param dirPath `string` - The path of the directory where the file will be created, including the file name and extension.
+   * @param content `any` - The content to be written to the file.
+   */
+  createFile(dirPath: string, content: NodeJS.ArrayBufferView | string) {
+    return new Promise((resolve, reject) =>
+      fs.writeFile(dirPath, content, (err) => {
+        if (err) reject(err);
+        else resolve(void 0);
+      })
+    );
+  }
+
+  /**
    * @description `[ENG]` Create a readable stream from a file.
    * @description `[ESP]` Crea un flujo de lectura desde un archivo.
    * @param path `string` - The path of the file to be read.
@@ -104,7 +119,7 @@ export class FileSystem {
           itemType = "directory";
           fs.rmSync(path, {
             recursive: true,
-            force: true
+            force: true,
           });
         } else {
           fs.unlinkSync(path);
@@ -236,7 +251,7 @@ export class FileSystem {
 
     try {
       return fs.readdirSync(folderPath, {
-        withFileTypes: true
+        withFileTypes: true,
       });
     } catch (error) {
       throw new Error(
@@ -319,7 +334,7 @@ export class FileSystem {
           fs.cpSync(src, dest, {
             preserveTimestamps: true,
             errorOnExist: false,
-            recursive: true
+            recursive: true,
           });
         } else {
           fs.copyFileSync(src, dest);
