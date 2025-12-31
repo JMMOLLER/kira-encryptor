@@ -23,6 +23,7 @@ export default async function run(params: WorkerTask) {
       tempPath,
     });
 
+    port.postMessage({ type: "done" });
     return true;
   } catch (error) {
     port.postMessage({

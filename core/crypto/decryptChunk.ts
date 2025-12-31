@@ -30,7 +30,7 @@ function decryptChunk(props: ChunkDecryptionProps) {
     props.SECRET_KEY
   );
   if (!ok) {
-    throw new Error(`Error when decoding block #${props.id}`);
+    throw new Error(`[decryptChunk] Error when decoding block #${props.id}`);
   }
 
   return {

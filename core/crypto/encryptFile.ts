@@ -9,6 +9,9 @@ import { promisify } from "util";
 
 interface FileEncryptionProps {
   filePath: Readonly<string>;
+  /**
+   * `processedBytes` - Number of bytes processed so far.
+   */
   onProgress: (processedBytes: number) => void;
   enableLogging?: boolean;
   SECRET_KEY: Buffer;

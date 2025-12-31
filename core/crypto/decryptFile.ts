@@ -13,6 +13,9 @@ interface FileDecryptionProps {
   filePath: Readonly<string>;
   enableLogging?: boolean;
   blockSize: number;
+  /**
+   * `processedBytes` - Number of bytes processed so far.
+   */
   onProgress: (processedBytes: number) => void;
   SECRET_KEY: Buffer;
   tempPath: string;
@@ -132,7 +135,7 @@ async function decryptFile(props: FileDecryptionProps): Promise<void> {
             // Check if we have enough data for the encrypted chunk
             if (leftover.length - offset < nonceLen + 4 + encryptedLen) break;
 
-            const { newOffset, plain } = await decryptChunk({
+            const { newOffset, plain } = decryptChunk({
               id: (this as any)._chunkCount,
               SECRET_KEY: fileKey,
               encryptedLen,

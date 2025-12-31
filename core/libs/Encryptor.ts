@@ -17,6 +17,9 @@ import pLimit from "p-limit";
 import { tmpdir } from "os";
 import path from "path";
 
+type MessageType = "progress" | "done" | "error";
+type Message = { type: MessageType; [x: string]: any };
+
 class Encryptor {
   private static workerPool: Piscina<Types.WorkerTask, void>;
   private static readonly FS = FileSystem.getInstance();
@@ -261,46 +264,63 @@ class Encryptor {
     );
 
     const channel = new MessageChannel();
+    let handler: undefined | ((m: Message) => void);
     try {
-      channel.port2.on(
-        "message",
-        (message: { type: string; [x: string]: any }) => {
-          switch (message.type) {
-            case "progress": {
-              const { processedBytes } = message;
-              this.processedBytes += processedBytes;
-              onProgress?.(this.processedBytes, totalFileSize);
-              break;
+      const messagePromise = new Promise<void>((resolve, reject) => {
+        handler = (message) => {
+          try {
+            switch (message.type) {
+              case "progress": {
+                const { processedBytes } = message;
+                this.processedBytes += processedBytes;
+                onProgress?.(this.processedBytes, totalFileSize);
+                break;
+              }
+
+              case "error": {
+                channel.port2.close();
+                reject(new Error(message.error));
+                break;
+              }
+
+              case "done": {
+                resolve();
+                break;
+              }
+
+              default:
+                console.warn("Unknown message type:", message);
             }
-            case "error": {
-              const error = new Error(message.error);
-              channel.port2.close();
-              throw error;
-            }
-            default:
-              console.warn("Unknown message type:", message);
+          } catch (err) {
+            reject(err as Error);
           }
-        }
-      );
+        };
+
+        // Register handler
+        channel.port2.on("message", handler);
+      });
 
       if (!Encryptor.workerPool) {
         this.startWorkerPool();
       }
 
-      await Encryptor.workerPool.run(
-        {
-          SECRET_KEY: this.SECRET_KEY,
-          blockSize: this.chunkSize,
-          enableLogging: this.LOG,
-          taskType: "encrypt",
-          port: channel.port1,
-          tempPath,
-          filePath,
-        },
-        {
-          transferList: [channel.port1] as StructuredSerializeOptions,
-        }
-      );
+      await Promise.race([
+        Encryptor.workerPool.run(
+          {
+            SECRET_KEY: this.SECRET_KEY,
+            blockSize: this.chunkSize,
+            enableLogging: this.LOG,
+            taskType: "encrypt",
+            port: channel.port1,
+            tempPath,
+            filePath,
+          },
+          {
+            transferList: [channel.port1] as StructuredSerializeOptions,
+          }
+        ),
+        messagePromise,
+      ]);
 
       const fileItem = (await this.onEncryptWriteStreamFinish({
         isInternalFlow: !!isInternalFlow,
@@ -317,11 +337,17 @@ class Encryptor {
       error = err as Error;
       return Promise.reject(err);
     } finally {
+      // Clean up message handler
+      handler && channel.port2.removeListener("message", handler);
+
+      // Close ports
       channel.port1.close();
       channel.port2.close();
+
+      // Call onEnd callback
       if (props.onEnd) props.onEnd(error);
       if (!isInternalFlow) {
-        await this.destroy();
+        await this.destroy(); // Destroy worker pool if not in internal flow
       }
     }
   }
@@ -365,46 +391,63 @@ class Encryptor {
     );
 
     const channel = new MessageChannel();
+    let handler: undefined | ((m: Message) => void);
     try {
-      channel.port2.on(
-        "message",
-        (message: { type: string; [x: string]: any }) => {
-          switch (message.type) {
-            case "progress": {
-              const { processedBytes } = message;
-              this.processedBytes += processedBytes;
-              onProgress?.(this.processedBytes, totalFileSize);
-              break;
+      const messagePromise = new Promise<void>((resolve, reject) => {
+        handler = (message) => {
+          try {
+            switch (message.type) {
+              case "progress": {
+                const { processedBytes } = message;
+                this.processedBytes += processedBytes;
+                onProgress?.(this.processedBytes, totalFileSize);
+                break;
+              }
+
+              case "error": {
+                channel.port2.close();
+                reject(new Error(message.error));
+                break;
+              }
+
+              case "done": {
+                resolve();
+                break;
+              }
+
+              default:
+                console.warn("Unknown message type:", message);
             }
-            case "error": {
-              const error = new Error(message.error);
-              channel.port2.close();
-              throw error;
-            }
-            default:
-              console.warn("Unknown message type:", message);
+          } catch (err) {
+            reject(err as Error);
           }
-        }
-      );
+        };
+
+        // Register handler
+        channel.port2.on("message", handler);
+      });
 
       if (!Encryptor.workerPool) {
         this.startWorkerPool();
       }
 
-      await Encryptor.workerPool.run(
-        {
-          filePath: filePath,
-          SECRET_KEY: this.SECRET_KEY,
-          enableLogging: this.LOG,
-          port: channel.port1,
-          taskType: "decrypt",
-          blockSize,
-          tempPath
-        },
-        {
-          transferList: [channel.port1] as StructuredSerializeOptions
-        }
-      );
+      await Promise.race([
+        Encryptor.workerPool.run(
+          {
+            filePath: filePath,
+            SECRET_KEY: this.SECRET_KEY,
+            enableLogging: this.LOG,
+            port: channel.port1,
+            taskType: "decrypt",
+            blockSize,
+            tempPath,
+          },
+          {
+            transferList: [channel.port1] as StructuredSerializeOptions,
+          }
+        ),
+        messagePromise,
+      ]);
 
       const outPath = isInternalFlow && fileItem ? fileItem.path : undefined;
       await this.onDecryptWriteStreamFinish({
@@ -420,11 +463,17 @@ class Encryptor {
       error = err as Error;
       return Promise.reject(err);
     } finally {
-      channel.port1.close();
+      // Clean up message handler
+      handler && channel.port2.removeListener("message", handler);
+
+      // Close ports
+      channel.port1?.close();
       channel.port2.close();
+
+      // Call onEnd callback
       if (props.onEnd) props.onEnd(error);
       if (!isInternalFlow) {
-        await this.destroy();
+        await this.destroy(); // Destroy worker pool if not in internal flow
       }
     }
   }
