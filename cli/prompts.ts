@@ -2,6 +2,7 @@ import type { FileItem, FolderItem } from "@akira-encryptor/core/types";
 import Encryptor, { FileSystem } from "@akira-encryptor/core";
 import * as utils from "@akira-encryptor/core/utils";
 import { workerPath } from "./const/workerPath";
+import sodium from "sodium-native";
 import prompts from "prompts";
 import fs from "fs";
 
@@ -42,7 +43,12 @@ export async function askForOtherOperation() {
 }
 
 // Note: If you enter an incorrect password, you will have to restart the program
-let password: Buffer | undefined = undefined;
+// IMPORTANT: `@akira-encryptor/core` wipes (memzero) the passphrase Buffer for safety.
+// So we must NOT cache the passphrase as a Buffer instance and reuse it.
+const credential: SecureCredential = {
+  password: sodium.sodium_malloc(32), // Placeholder for the password
+  ready: false,
+};
 
 export async function askUserActions() {
   const { action } = (await prompts([
@@ -81,11 +87,15 @@ export async function askUserActions() {
 
   let path: string = "";
 
-  if (password && action === "decrypt") {
-    const encryptor = await Encryptor.init(password, workerPath, {
-      minDelayPerStep: 0,
-      silent: true,
-    });
+  if (credential.ready && action === "decrypt") {
+    const encryptor = await Encryptor.init(
+      Buffer.from(credential.password),
+      workerPath,
+      {
+        minDelayPerStep: 0,
+        silent: true,
+      }
+    );
     const storage = await encryptor.getStorage();
     const values = Array.from(storage.values());
     const choices = values
@@ -156,7 +166,7 @@ export async function askUserActions() {
     path = digitedPath;
   }
 
-  if (!password) {
+  if (!credential.ready) {
     const storeExists = FileSystem.getInstance().itemExists("./library.json");
     const { password: pwd } = (await prompts([
       {
@@ -179,8 +189,11 @@ export async function askUserActions() {
       throw new Error("Contraseña no válida.");
     }
 
-    password = Buffer.from(pwd);
+    sodium.sodium_mprotect_readwrite(credential.password); // Allow writing to the placeholder
+    credential.password.set(Buffer.from(pwd, "utf8")); // Set the password
+    sodium.sodium_mprotect_readonly(credential.password); // Protect it as readonly
+    credential.ready = true;
   }
 
-  return { action, type, path, password };
+  return { action, type, path, credential };
 }

@@ -9,18 +9,19 @@ import path from "path";
 type HanlderProps = {
   action: CliAction;
   folderPath: string;
-  password: Buffer;
+  credential: SecureCredential;
 };
 
 const progressBar = new cliProgress.SingleBar(
   {
-    format: "Progreso total |{bar}| {percentage}% || {processed}/{formattedTotal}"
+    format:
+      "Progreso total |{bar}| {percentage}% || {processed}/{formattedTotal}",
   },
   cliProgress.Presets.shades_classic
 );
 
 async function handleFolderAction(props: HanlderProps) {
-  const { action, folderPath, password } = props;
+  const { action, folderPath, credential } = props;
 
   let init = false;
   let formattedTotal = "0B";
@@ -30,14 +31,14 @@ async function handleFolderAction(props: HanlderProps) {
       formattedTotal = utils.formatBytes(total);
       progressBar.start(total, 0, {
         processed: utils.formatBytes(0),
-        formattedTotal
+        formattedTotal,
       });
       init = true;
     }
 
     progressBar.update(processed, {
       processed: utils.formatBytes(processed),
-      formattedTotal
+      formattedTotal,
     });
 
     if (processed >= total) {
@@ -72,20 +73,23 @@ async function handleFolderAction(props: HanlderProps) {
     // Ensure the bar is not running from a previous operation
     progressBar.stop();
 
-    const Encryptor = await EncryptorClass.init(password, workerPath);
+    const Encryptor = await EncryptorClass.init(
+      Buffer.from(credential.password),
+      workerPath
+    );
 
     if (action === "encrypt") {
       const item = await Encryptor.encryptFolder({
         folderPath: path.normalize(folderPath),
         onProgress: handleProgress,
-        onEnd: handleEnd
+        onEnd: handleEnd,
       });
 
       // Ask if the user wants to hide the folder
       await askForHideItem({
         actionFor: "folder",
         Encryptor,
-        item
+        item,
       });
     } else {
       // If the folder is hidden, we need to reveal it first
@@ -97,7 +101,7 @@ async function handleFolderAction(props: HanlderProps) {
       await Encryptor.decryptFolder({
         folderPath: path.normalize(resolverdFolderPath),
         onProgress: handleProgress,
-        onEnd: handleEnd
+        onEnd: handleEnd,
       });
     }
   } catch (error) {

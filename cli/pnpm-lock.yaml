@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@akira-encryptor/core':
-        specifier: file:..\core\akira-encryptor-core-0.5.0-beta.tgz
-        version: file:../core/akira-encryptor-core-0.5.0-beta.tgz(typescript@5.9.3)
+        specifier: file:..\core\akira-encryptor-core-0.6.0-beta.tgz
+        version: file:../core/akira-encryptor-core-0.6.0-beta.tgz(bare-url@2.3.2)(typescript@5.9.3)
       '@yao-pkg/pkg':
         specifier: ^6.11.0
         version: 6.11.0
@@ -36,6 +36,9 @@ importers:
       '@types/prompts':
         specifier: ^2.4.9
         version: 2.4.9
+      '@types/sodium-native':
+        specifier: ^2.3.9
+        version: 2.3.9
       esbuild:
         specifier: ^0.25.12
         version: 0.25.12
@@ -45,9 +48,9 @@ importers:
 
 packages:
 
-  '@akira-encryptor/core@file:../core/akira-encryptor-core-0.5.0-beta.tgz':
-    resolution: {integrity: sha512-qM0IfUHtGC3hQRbiIMYsIxdWk18Sgkp0Ca1EHNzqIdLEJT6v8EXq4cUjpY6ID8eLQgbDx41ctK8a6acr8chY5A==, tarball: file:../core/akira-encryptor-core-0.5.0-beta.tgz}
-    version: 0.5.0-beta
+  '@akira-encryptor/core@file:../core/akira-encryptor-core-0.6.0-beta.tgz':
+    resolution: {integrity: sha512-4e5OnWfmMySQwd8EcMK41L9aTyLi1uemx0wnMZCtSDGquqBjabP9ibcDWO5WWdnCi6E7DzNGcQcVvW63BbQF2Q==, tarball: file:../core/akira-encryptor-core-0.6.0-beta.tgz}
+    version: 0.6.0-beta
     peerDependencies:
       typescript: ^5
 
@@ -245,6 +248,10 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
+  '@msgpack/msgpack@3.1.3':
+    resolution: {integrity: sha512-47XIizs9XZXvuJgoaJUIE2lFoID8ugvc0jzSHP+Ptfk8nTbnR8g788wv48N03Kx0UkAv559HWRQ3yzOgzlRNUA==}
+    engines: {node: '>= 18'}
+
   '@napi-rs/nice-android-arm-eabi@1.1.1':
     resolution: {integrity: sha512-kjirL3N6TnRPv5iuHw36wnucNqXAO46dzK9oPb0wj076R5Xm8PfUVA9nAFB5ZNMmfJQJVKACAPd/Z2KYMppthw==}
     engines: {node: '>= 10'}
@@ -363,17 +370,14 @@ packages:
   '@types/cli-progress@3.11.6':
     resolution: {integrity: sha512-cE3+jb9WRlu+uOSAugewNpITJDt1VF8dHOopPO4IABFc3SXYL5WE/+PTz/FCdZRRfIujiWW3n3aMbv1eIGVRWA==}
 
-  '@types/hidefile@3.0.3':
-    resolution: {integrity: sha512-TxdhdUW4i3QdBXdF6ugJtXtb/JW9if2Jv9Gg+oUO1HZ45bAq03BVv8wjSwsGlC59MauQmW3VYrE82pi11PyPuQ==}
-
-  '@types/libsodium-wrappers@0.7.14':
-    resolution: {integrity: sha512-5Kv68fXuXK0iDuUir1WPGw2R9fOZUlYlSAa0ztMcL0s0BfIDTqg9GXz8K30VJpPP3sxWhbolnQma2x+/TfkzDQ==}
-
   '@types/node@25.0.3':
     resolution: {integrity: sha512-W609buLVRVmeW693xKfzHeIV6nJGGz98uCPfeXI1ELMLXVeKYZ9m15fAMSaUPBHYLGFsVRcMmSCksQOrZV9BYA==}
 
   '@types/prompts@2.4.9':
     resolution: {integrity: sha512-qTxFi6Buiu8+50/+3DGIWLHM6QuWsEKugJnnP6iv2Mc4ncxE4A/OJkjuVOA+5X0X1S/nq5VJRa8Lu+nwcvbrKA==}
+
+  '@types/sodium-native@2.3.9':
+    resolution: {integrity: sha512-jZIg5ltGH1okmnH3FrLQsgwjcjOVozMSHwSiEm1/LpMekhOMHbQqp21P4H24mizh1BjwI6Q8qmphmD/HJuAqWg==}
 
   '@yao-pkg/pkg-fetch@3.5.31':
     resolution: {integrity: sha512-qBLFfCXJECsxMlvwamhdWR65LWI7Cnb40dmI+1NIr1Nfk8Ddc8luZIJsRRZER9UrY13X1NJZSRORsqIPYDsJbw==}
@@ -738,12 +742,6 @@ packages:
     resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
     engines: {node: '>=6'}
 
-  libsodium-wrappers@0.7.16:
-    resolution: {integrity: sha512-Gtr/WBx4dKjvRL1pvfwZqu7gO6AfrQ0u9vFL+kXihtHf6NfkROR8pjYWn98MFDI3jN19Ii1ZUfPR9afGiPyfHg==}
-
-  libsodium@0.7.16:
-    resolution: {integrity: sha512-3HrzSPuzm6Yt9aTYCDxYEG8x8/6C0+ag655Y7rhhWZM9PT4NpdnbqlzXhGZlDnkgR6MeSTnOt/VIyHLs9aSf+Q==}
-
   lie@3.1.1:
     resolution: {integrity: sha512-RiNhHysUjhrDQntfYSfY4MU24coXXdEOgw9WGcKHNeEwffDYbF//u87M1EWaMGzuFoSbqW0C9C6lEEhDOAswfw==}
 
@@ -1034,22 +1032,23 @@ packages:
 
 snapshots:
 
-  '@akira-encryptor/core@file:../core/akira-encryptor-core-0.5.0-beta.tgz(typescript@5.9.3)':
+  '@akira-encryptor/core@file:../core/akira-encryptor-core-0.6.0-beta.tgz(bare-url@2.3.2)(typescript@5.9.3)':
     dependencies:
+      '@msgpack/msgpack': 3.1.3
       '@seald-io/nedb': 4.1.2
-      '@types/hidefile': 3.0.3
-      '@types/libsodium-wrappers': 0.7.14
       chalk: 5.6.2
       cli-spinners: 3.3.0
       dotenv: 16.6.1
       filesize-parser: 1.5.1
       hidefile: 3.0.0
-      libsodium-wrappers: 0.7.16
       nanoid: 5.1.6
       p-limit: 6.2.0
       piscina: 5.1.4
+      sodium-native: 5.0.10(bare-url@2.3.2)
       typescript: 5.9.3
       zod: 3.25.76
+    transitivePeerDependencies:
+      - bare-url
 
   '@babel/generator@7.28.5':
     dependencies:
@@ -1168,6 +1167,8 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  '@msgpack/msgpack@3.1.3': {}
+
   '@napi-rs/nice-android-arm-eabi@1.1.1':
     optional: true
 
@@ -1256,12 +1257,6 @@ snapshots:
     dependencies:
       '@types/node': 25.0.3
 
-  '@types/hidefile@3.0.3':
-    dependencies:
-      '@types/node': 25.0.3
-
-  '@types/libsodium-wrappers@0.7.14': {}
-
   '@types/node@25.0.3':
     dependencies:
       undici-types: 7.16.0
@@ -1270,6 +1265,10 @@ snapshots:
     dependencies:
       '@types/node': 25.0.3
       kleur: 3.0.3
+
+  '@types/sodium-native@2.3.9':
+    dependencies:
+      '@types/node': 25.0.3
 
   '@yao-pkg/pkg-fetch@3.5.31':
     dependencies:
@@ -1664,12 +1663,6 @@ snapshots:
       graceful-fs: 4.2.11
 
   kleur@3.0.3: {}
-
-  libsodium-wrappers@0.7.16:
-    dependencies:
-      libsodium: 0.7.16
-
-  libsodium@0.7.16: {}
 
   lie@3.1.1:
     dependencies:

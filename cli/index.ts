@@ -6,7 +6,7 @@ import fs from "fs";
 async function main() {
   let exit = false;
   do {
-    const { action, type, path, password } = await askUserActions();
+    const { action, type, path, credential } = await askUserActions();
 
     if (
       (type === "file" &&
@@ -21,9 +21,9 @@ async function main() {
 
     try {
       if (type === "file") {
-        await handleFileAction({ action, filePath: path, password });
+        await handleFileAction({ action, filePath: path, credential });
       } else {
-        await handleFolderAction({ action, folderPath: path, password });
+        await handleFolderAction({ action, folderPath: path, credential });
       }
       exit = await askForOtherOperation();
     } catch (err) {

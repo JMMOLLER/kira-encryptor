@@ -1,4 +1,6 @@
-import type { FileEncryptor, ProgressCallback } from "@akira-encryptor/core/types";
+import type { ProgressCallback } from "@akira-encryptor/core/types";
+import type { FileEncryptor } from "@akira-encryptor/core/types";
+
 import * as utils from "@akira-encryptor/core/utils";
 import EncryptorClass from "@akira-encryptor/core";
 import { workerPath } from "../const/workerPath";
@@ -9,18 +11,19 @@ import path from "path";
 type HanlderProps = {
   action: CliAction;
   filePath: string;
-  password: Buffer;
+  credential: SecureCredential;
 };
 
 const progressBar = new cliProgress.SingleBar(
   {
-    format: "Progreso total |{bar}| {percentage}% || {processed}/{formattedTotal}"
+    format:
+      "Progreso total |{bar}| {percentage}% || {processed}/{formattedTotal}",
   },
   cliProgress.Presets.shades_classic
 );
 
 async function handleFileAction(props: HanlderProps) {
-  const { action, filePath, password } = props;
+  const { action, filePath, credential } = props;
 
   let formattedTotal = "0B";
   let init = false;
@@ -30,14 +33,14 @@ async function handleFileAction(props: HanlderProps) {
       formattedTotal = utils.formatBytes(total);
       progressBar.start(total, 0, {
         processed: utils.formatBytes(0),
-        formattedTotal
+        formattedTotal,
       });
       init = true;
     }
 
     progressBar.update(processed, {
       processed: utils.formatBytes(processed),
-      formattedTotal
+      formattedTotal,
     });
 
     if (processed >= total) {
@@ -72,20 +75,23 @@ async function handleFileAction(props: HanlderProps) {
     // Ensure the bar is not running from a previous operation
     progressBar.stop();
 
-    const Encryptor = await EncryptorClass.init(password, workerPath);
+    const Encryptor = await EncryptorClass.init(
+      Buffer.from(credential.password),
+      workerPath
+    );
 
     if (action === "encrypt") {
       const item = await Encryptor.encryptFile({
         filePath: path.normalize(filePath),
         onProgress: handleProgress,
-        onEnd: handleEnd
+        onEnd: handleEnd,
       });
 
       // Ask if the user wants to hide the file
       await askForHideItem({
         actionFor: "file",
         Encryptor,
-        item
+        item,
       });
     } else {
       // If the folder is hidden, we need to reveal it first
@@ -94,7 +100,7 @@ async function handleFileAction(props: HanlderProps) {
       await Encryptor.decryptFile({
         filePath: path.normalize(resolvedFilePath),
         onProgress: handleProgress,
-        onEnd: handleEnd
+        onEnd: handleEnd,
       });
     }
   } catch (error) {
