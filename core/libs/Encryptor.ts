@@ -49,17 +49,24 @@ class Encryptor {
   private totalFolderBytes = 0;
   private processedBytes = 0;
 
-  private constructor(password: Buffer) {
-    const tmp = generateSecretKey(password);
-    const sab = new SharedArrayBuffer(tmp.length); // Create SharedArrayBuffer
+  private constructor(
+    password: Buffer,
+    storageHeader: Types.StorageHeader
+  ) {
+    // generate secret key from passphrase and storage header
+    const { KEY, keyVerifier } = generateSecretKey(password, storageHeader);
+    // Update verifier in storage if it was not set
+    if (!storageHeader.verifier) Encryptor.STORAGE.updateVerifier(keyVerifier);
+
+    const sab = new SharedArrayBuffer(KEY.length); // Create SharedArrayBuffer
     this.SECRET_KEY = new Uint8Array(sab); // Create Uint8Array with underlying SharedArrayBuffer
-    this.SECRET_KEY.set(tmp);
+    this.SECRET_KEY.set(KEY); // Copy secret key into the SharedArrayBuffer
   }
 
   /**
    * @description `[ENG]` Initializes the Encryptor instance and the storage.
    * @description `[ES]` Inicializa la instancia de Encryptor y el almacenamiento.
-   * @param password `string` - The password used to generate the secret key.
+   * @param password `string` - The password used to generate a derived secret key. **The value will be zeroed out after use.**
    * @param workerPath `string` - The path to the worker script for encryption/decryption.
    * @see See the root `package.json` for worker paths.
    */
@@ -78,7 +85,15 @@ class Encryptor {
     workerPath?: string,
     options?: Types.EncryptorOptions
   ): Promise<Encryptor | Types.BasicEncryptor> {
-    const instance = new Encryptor(password);
+    Encryptor.STORAGE = new Storage(options?.dbPath);
+    await Encryptor.STORAGE.ready;
+
+    const storageContent = Encryptor.STORAGE.getStorageContent();
+    if (storageContent instanceof Error) {
+      return Promise.reject(storageContent);
+    }
+
+    const instance = new Encryptor(password, storageContent.header);
     instance.DEFAULT_STEP_DELAY = options?.minDelayPerStep || 300;
     instance.ALLOW_EXTRA_PROPS = options?.allowExtraProps || false;
     instance.MAX_THREADS = options?.maxThreads || env.MAX_THREADS;
@@ -86,13 +101,6 @@ class Encryptor {
     instance.stepDelay = instance.DEFAULT_STEP_DELAY;
     instance.LOG = options?.enableLogging || env.LOG;
     instance.SILENT = options?.silent || false;
-
-    Encryptor.STORAGE = new Storage(
-      instance.SECRET_KEY as Buffer,
-      instance.ENCODING,
-      options?.dbPath
-    );
-    await Encryptor.STORAGE.ready;
 
     if (!workerPath) {
       return {

@@ -1,6 +1,20 @@
 import sodium from "sodium-native";
 
-interface KeyDerivationOptions {
+/**
+ * @description `[ENG]` Derives a file encryption key from a previously derived secret key and a salt using BLAKE2b.
+ * @description `[ES]` Deriva una clave de cifrado de archivo a partir de una clave secreta previamente derivada y una salt utilizando BLAKE2b.
+ */
+function deriveFileKey(secretKey: Buffer, salt: Buffer): Buffer {
+  // 256-bit key
+  const fileKey = Buffer.alloc(32);
+
+  // Derive the file key using BLAKE2b
+  sodium.crypto_generichash(fileKey, salt, secretKey);
+
+  return fileKey;
+}
+
+interface Opts {
   opslimit?: number;
   memlimit?: number;
   algo?: number;
@@ -14,11 +28,7 @@ interface KeyDerivationOptions {
  * - memlimit: sodium.crypto_pwhash_MEMLIMIT_MODERATE
  * - algo: sodium.crypto_pwhash_ALG_ARGON2ID13
  */
-export default function deriveFileKey(
-  password: Buffer,
-  salt: Buffer,
-  opts?: KeyDerivationOptions
-): Buffer {
+function derivePassword(password: Buffer, salt: Buffer, opts?: Opts): Buffer {
   const key = Buffer.alloc(32); // 256-bit key
   const opslimit = opts?.opslimit ?? sodium.crypto_pwhash_OPSLIMIT_MODERATE;
   const memlimit = opts?.memlimit ?? sodium.crypto_pwhash_MEMLIMIT_MODERATE;
@@ -28,3 +38,5 @@ export default function deriveFileKey(
 
   return key;
 }
+
+export { deriveFileKey, derivePassword };

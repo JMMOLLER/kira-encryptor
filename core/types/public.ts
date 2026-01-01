@@ -236,3 +236,19 @@ export type FolderItem = Item & {
 };
 
 export type StorageItem = FileItem | FolderItem;
+
+export type StorageHeader = {
+  kdf: number;
+  opslimit: number;
+  memlimit: number;
+  /**
+   * @description Hexadecimal string representing the salt used for key derivation.
+   */
+  salt: string;
+  verifier: string; // hash de verificación
+};
+
+export interface StorageData {
+  header: StorageHeader;
+  body: Record<string, StorageItem>;
+}

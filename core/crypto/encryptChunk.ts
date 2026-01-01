@@ -9,6 +9,10 @@ interface ChunkEncryptionProps {
   id: number;
 }
 
+/**
+ * @description `[ENG]` Encrypts a data chunk using a unique nonce and the secret key.
+ * @description `[ESP]` Cifra un bloque de datos utilizando un nonce único y la clave secreta.
+ */
 function encryptChunk(props: ChunkEncryptionProps): Buffer {
   const { chunk, SECRET_KEY, log } = props;
 

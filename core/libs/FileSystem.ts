@@ -62,8 +62,8 @@ export class FileSystem {
   }
 
   /**
-   * @description `[ENG]` Create a file in the filesystem.
-   * @description `[ESP]` Crea un archivo en el sistema de archivos.
+   * @description `[ENG]` Create a file in the filesystem. If the file already exists, it will be overwritten.
+   * @description `[ESP]` Crea un archivo en el sistema de archivos. Si el archivo ya existe, lo sobrescribe.
    * @param dirPath `string` - The path of the directory where the file will be created, including the file name and extension.
    * @param content `any` - The content to be written to the file.
    */

@@ -1,6 +1,6 @@
+import { deriveFileKey } from "./keyDerivation";
 import { FileSystem } from "../libs/FileSystem";
 import { Transform, pipeline } from "stream";
-import deriveFileKey from "./deriveFileKey";
 import decryptChunk from "./decryptChunk";
 import sodium from "sodium-native";
 import { open } from "fs/promises";
@@ -76,16 +76,8 @@ async function decryptFile(props: FileDecryptionProps): Promise<void> {
     }
     const salt = Buffer.from(saltBuf);
 
-    const opslimit =
-      headerObj.opslimit ?? sodium.crypto_pwhash_OPSLIMIT_MODERATE;
-    const memlimit =
-      headerObj.memlimit ?? sodium.crypto_pwhash_MEMLIMIT_MODERATE;
-
     // ---- 2) Generate derived key ----
-    const fileKey = deriveFileKey(props.SECRET_KEY, salt, {
-      opslimit,
-      memlimit
-    });
+    const fileKey = deriveFileKey(props.SECRET_KEY, salt);
 
     // Close previous descriptor
     await fd.close();

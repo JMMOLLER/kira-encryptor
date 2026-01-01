@@ -1,9 +1,11 @@
 import type { Types } from "../types";
 
+import generateSalt from "../crypto/generateSalt";
 import { decode, encode } from "@msgpack/msgpack";
 import generateUID from "../utils/generateUID";
 import { FileSystem } from "./FileSystem";
 import { env } from "../configs/env";
+import sodium from "sodium-native";
 import Nedb from "@seald-io/nedb";
 
 type BasicStorageItem = Omit<Types.FileItem | Types.FolderItem, "_id">;
@@ -12,7 +14,8 @@ type BasicFolderItem = Omit<Types.FolderItem, "_id">;
 
 class Storage {
   private static db: Omit<Nedb<Types.StorageItem>, "autoloadPromise">;
-  private readonly fs: FileSystem;
+  private static readonly fs = FileSystem.getInstance();
+  private storageHeader: Types.StorageHeader;
   private readonly dbPath: string;
 
   /**
@@ -26,21 +29,24 @@ class Storage {
   /**
    * @description `[ENG]` Initializes the storage with the given encryption and decryption functions to encrypt and decrypt the data.
    * @description `[ESP]` Inicializa el almacenamiento con las funciones de cifrado y descifrado dadas para descifrar y cifrar los datos.
-   * @param secretKey - The secret key used for encryption and decryption.
-   * @param encoding - The encoding used for the data.
    * @param dbPath - The path to the database file. Defaults to the value of `env.LIBRARY_PATH`.
    */
-  constructor(
-    secretKey: Buffer,
-    encoding: Types.BufferEncoding,
-    dbPath = env.DB_PATH
-  ) {
+  constructor(dbPath = env.DB_PATH) {
     this.dbPath = dbPath;
-    this.fs = FileSystem.getInstance();
     this.ready = new Promise<void>((resolve, reject) => {
       this._resolveReady = resolve;
       this._rejectReady = reject;
     });
+
+    // Initialize storage header with default values
+    this.storageHeader = {
+      kdf: sodium.crypto_pwhash_ALG_ARGON2ID13,
+      memlimit: sodium.crypto_pwhash_MEMLIMIT_MODERATE,
+      opslimit: sodium.crypto_pwhash_OPSLIMIT_MODERATE,
+      salt: Buffer.from(generateSalt()).toString("hex"),
+      verifier: "",
+    };
+
     Storage.db = new Nedb<Types.StorageItem>({
       autoload: true,
       inMemoryOnly: true,
@@ -54,27 +60,24 @@ class Storage {
    */
   private async loadFromFile() {
     try {
-      // If the database file does not exist, resolve immediately.
-      if (!this.fs.itemExists(this.dbPath)) {
-        this._resolveReady();
-        return;
-      }
-
       // Read the database file and parse its contents.
-      const data = this.fs.readFile(this.dbPath);
+      const data = this.getStorageContent();
 
-      // If the file is empty, resolve immediately.
-      if (!data || data.length === 0) {
+      // If an error occurred while reading the file, throw the error.
+      if (data instanceof Error) {
+        throw data;
+      } else if (!data) {
+        // If the file is empty, resolve immediately.
         this._resolveReady();
         return;
       }
-      const parsed = decode(data) as Types.StorageItem; // using msgpack
 
-      if (!parsed) throw new Error("Failed to parse storage data.");
+      // Set the storage header
+      this.storageHeader = data.header;
 
       // Insert each document into the database.
-      for (const doc of Object.values(parsed)) {
-        await Storage.db.insertAsync(doc);
+      for (const item of Object.values(data.body)) {
+        await Storage.db.insertAsync(item);
       }
       this._resolveReady();
     } catch (error) {
@@ -83,17 +86,74 @@ class Storage {
   }
 
   /**
+   * @description `[ENG]` Retrieves and parses the storage content from the database file.
+   * @description `[ESP]` Recupera y analiza el contenido del almacenamiento desde el archivo de la base de datos.
+   */
+  public getStorageContent(): Types.StorageData | Error {
+    try {
+      // If the database file does not exist, return an empty storage structure.
+      if (!Storage.fs.itemExists(this.dbPath)) {
+        return {
+          header: this.storageHeader,
+          body: {},
+        };
+      }
+
+      // Read the database file and parse its contents.
+      const data = Storage.fs.readFile(this.dbPath);
+
+      // If the file is empty, throw an error.
+      if (!data || data.length === 0) {
+        throw new Error("Storage file is empty.");
+      }
+
+      const parsed = decode(data) as Types.StorageData; // using msgpack
+
+      // Validate parsed data
+      if (!parsed) throw new Error("Failed to parse storage data.");
+      if (!parsed.header || !parsed.body) {
+        throw new Error("Invalid storage data format.");
+      }
+      if (!parsed.header.verifier) {
+        throw new Error(
+          "Storage verifier missing. Maybe the storage is corrupted."
+        );
+      }
+
+      return parsed;
+    } catch (error) {
+      return error as Error;
+    }
+  }
+
+  /**
    * @description `[ENG]` Saves the current state of the database to the file.
    * @description `[ESP]` Guarda el estado actual de la base de datos en el archivo.
    */
   private async saveAsFile() {
-    const data = Object.fromEntries(await this.getAll()); // Obtain all items from the database
-    const buffer = Buffer.from(encode(data)); // Encode the data using msgpack
-    this.fs.createFile(this.dbPath, buffer); // Save the encoded buffer to the database file
+    try {
+      const body = Object.fromEntries(await this.getAll()); // Obtain all items from the database
+      const data = {
+        header: this.storageHeader,
+        body,
+      };
+
+      const buffer = Buffer.from(encode(data)); // Encode the data using msgpack
+      Storage.fs.createFile(this.dbPath, buffer); // Save the encoded buffer to the database file
+    } catch (error) {
+      return Promise.reject(error as Error);
+    }
   }
 
   get db() {
     return Storage.db;
+  }
+
+  updateVerifier(verifier: string) {
+    if (!!this.storageHeader.verifier) {
+      throw new Error("Verifier already exists and cannot be updated.");
+    }
+    this.storageHeader.verifier = verifier;
   }
 
   async getAll() {

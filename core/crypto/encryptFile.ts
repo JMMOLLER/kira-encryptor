@@ -1,6 +1,6 @@
+import { deriveFileKey } from "./keyDerivation";
 import { FileSystem } from "../libs/FileSystem";
 import { pipeline, Transform } from "stream";
-import deriveFileKey from "./deriveFileKey";
 import encryptChunk from "./encryptChunk";
 import generateSalt from "./generateSalt";
 import type { WriteStream } from "fs";
@@ -37,16 +37,13 @@ async function encryptFile(props: FileEncryptionProps): Promise<void> {
 
   // Prepara header
   const headerObj = {
-    kdf: sodium.crypto_pwhash_ALG_ARGON2ID13,
     salt: Buffer.from(salt).toString("hex"),
-    opslimit: sodium.crypto_pwhash_OPSLIMIT_MODERATE,
-    memlimit: sodium.crypto_pwhash_MEMLIMIT_MODERATE,
     version: 1
   };
   const headerJson = Buffer.from(JSON.stringify(headerObj), "utf8");
   const magic = Buffer.from("AKRA"); // 4 bytes
   const version = Buffer.from([0x01]); // 1 byte
-  const headerLen = Buffer.alloc(4);
+  const headerLen = Buffer.alloc(4); // 4 bytes
   headerLen.writeUInt32BE(headerJson.length, 0);
 
   // Streams for reading and writing file
@@ -95,6 +92,9 @@ async function encryptFile(props: FileEncryptionProps): Promise<void> {
 
   // This call handles the piping of the read stream to the encrypt stream and then to the write stream
   await pipelineAsync(rs, encryptStream, ws);
+
+  // Clean up sensitive data
+  sodium.sodium_memzero(fileKey);
 
   // Ensure the write stream logging is closed
   if (log) {
