@@ -138,8 +138,14 @@ class Storage {
         body,
       };
 
+      if (!data.header.verifier) {
+        throw new Error(
+          "Storage verifier missing. Cannot save storage without a verifier."
+        );
+      }
+
       const buffer = Buffer.from(encode(data)); // Encode the data using msgpack
-      Storage.fs.createFile(this.dbPath, buffer); // Save the encoded buffer to the database file
+      await Storage.fs.createFile(this.dbPath, buffer); // Save the encoded buffer to the database file
     } catch (error) {
       return Promise.reject(error as Error);
     }
