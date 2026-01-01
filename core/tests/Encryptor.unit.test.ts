@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import generateSecretKey from "../crypto/generateSecretKey";
 import generateNonce from "../crypto/generateNonce";
+import generateSalt from "../crypto/generateSalt";
 import encryptText from "../crypto/encryptText";
 import decryptText from "../crypto/decryptText";
 import EncryptorClass from "../libs/Encryptor";
 import { env } from "../configs/env";
+import sodium from "sodium-native";
 import hidefile from "hidefile";
 import path from "path";
 import fs from "fs";
@@ -14,18 +16,28 @@ const tempDir = path.resolve(__dirname, "tmp");
 const testFolderPath = path.join(tempDir, "test-dir");
 const testFilePath = path.join(tempDir, "test-file.txt");
 const pwdBuff = Buffer.from("mypassword");
-const pwd = generateSecretKey(pwdBuff);
+const { KEY } = generateSecretKey(pwdBuff, {
+  kdf: sodium.crypto_pwhash_ALG_ARGON2ID13,
+  memlimit: sodium.crypto_pwhash_MEMLIMIT_MODERATE,
+  opslimit: sodium.crypto_pwhash_OPSLIMIT_MODERATE,
+  salt: Buffer.from(generateSalt()).toString("hex"),
+  verifier: "",
+});
 
 beforeAll(async () => {
   process.env.NODE_ENV = "test"; // Set NODE_ENV to test
 
-  Encryptor = await EncryptorClass.init(pwdBuff, "dist/esm/workers/encryptor.worker.js", {
-    dbPath: tempDir + "/test-storage.bin",
-    allowExtraProps: true,
-    minDelayPerStep: 0,
-    maxThreads: 2,
-    silent: true
-  });
+  Encryptor = await EncryptorClass.init(
+    pwdBuff,
+    "dist/esm/workers/encryptor.worker.js",
+    {
+      dbPath: tempDir + "/test-storage.bin",
+      allowExtraProps: true,
+      minDelayPerStep: 0,
+      maxThreads: 2,
+      silent: true,
+    }
+  );
 
   // Crear el directorio temporal y el archivo de prueba
   fs.mkdirSync(tempDir, { recursive: true });
@@ -48,31 +60,31 @@ afterAll(async () => {
 
 describe("Encryptor", () => {
   it("should handle empty strings correctly", () => {
-    const encrypted = encryptText("", pwd, env.ENCODING);
-    const decrypted = decryptText(encrypted, pwd, env.ENCODING);
+    const encrypted = encryptText("", KEY, env.ENCODING);
+    const decrypted = decryptText(encrypted, KEY, env.ENCODING);
 
     expect(decrypted).toBe("");
   });
 
   it("should encrypt and decrypt a simple message", () => {
     const message = "Hola mundo seguro!";
-    const encrypted = encryptText(message, pwd, env.ENCODING);
-    const decrypted = decryptText(encrypted, pwd, env.ENCODING);
+    const encrypted = encryptText(message, KEY, env.ENCODING);
+    const decrypted = decryptText(encrypted, KEY, env.ENCODING);
 
     expect(decrypted).toBe(message);
   });
 
   it("should throw an error when decrypting tampered data", () => {
-    const encrypted = encryptText("Mensaje original", pwd, env.ENCODING);
+    const encrypted = encryptText("Mensaje original", KEY, env.ENCODING);
     const tampered = encrypted.slice(0, -4) + "1234"; // tampering the encrypted string
 
-    expect(() => decryptText(tampered, pwd, env.ENCODING)).toThrow(
+    expect(() => decryptText(tampered, KEY, env.ENCODING)).toThrow(
       "wrong secret key"
     );
   });
 
   it("should return a base64 encoded encrypted string", () => {
-    const encrypted = encryptText("Texto para test", pwd, env.ENCODING);
+    const encrypted = encryptText("Texto para test", KEY, env.ENCODING);
     expect(typeof encrypted).toBe("string");
     expect(encrypted).toMatch(/^[A-Za-z0-9+/=]+$/);
   });
@@ -90,7 +102,7 @@ describe("Encryptor", () => {
     const invalidEncryptedText = "invalid_base64_string";
 
     expect(() =>
-      decryptText(invalidEncryptedText, pwd, env.ENCODING)
+      decryptText(invalidEncryptedText, KEY, env.ENCODING)
     ).toThrow();
   });
 
@@ -98,7 +110,7 @@ describe("Encryptor", () => {
     const originalContent = fs.readFileSync(testFilePath, "utf-8");
     const res = await Encryptor.encryptFile({
       filePath: testFilePath,
-      onProgress: () => {}
+      onProgress: () => {},
     });
 
     const encryptedFilePath = testFilePath.replace(
@@ -113,7 +125,7 @@ describe("Encryptor", () => {
 
     await Encryptor.decryptFile({
       filePath: encryptedFilePath,
-      onProgress: () => {}
+      onProgress: () => {},
     });
 
     const decryptedFilePath = fs.existsSync(testFilePath);
@@ -132,7 +144,7 @@ describe("Encryptor", () => {
 
     const res = await Encryptor.encryptFolder({
       folderPath: testFolderPath,
-      onProgress: () => {}
+      onProgress: () => {},
     });
 
     const encryptedFolderPath = path.join(tempDir, res._id);
@@ -146,7 +158,7 @@ describe("Encryptor", () => {
 
     await Encryptor.decryptFolder({
       folderPath: encryptedFolderPath,
-      onProgress: () => {}
+      onProgress: () => {},
     });
 
     const decryptedFolderPath = fs.existsSync(testFolderPath);
@@ -165,7 +177,7 @@ describe("Encryptor", () => {
   it("should hide and unhide files correctly", async () => {
     const res = await Encryptor.encryptFile({
       filePath: testFilePath,
-      onProgress: () => {}
+      onProgress: () => {},
     });
     const encHiddenFilePath = testFilePath.replace(
       path.basename(testFilePath),
@@ -189,14 +201,14 @@ describe("Encryptor", () => {
 
     await Encryptor.decryptFile({
       filePath: encryptedFilePath,
-      onProgress: () => {}
+      onProgress: () => {},
     });
   });
 
   it("should hide and unhide folders correctly", async () => {
     const res = await Encryptor.encryptFolder({
       folderPath: testFolderPath,
-      onProgress: () => {}
+      onProgress: () => {},
     });
     const encHiddenFolderPath = path.join(tempDir, `.${res._id}`);
 
@@ -214,14 +226,14 @@ describe("Encryptor", () => {
 
     await Encryptor.decryptFolder({
       folderPath: encFolderPath,
-      onProgress: () => {}
+      onProgress: () => {},
     });
   });
 
   it("should save extra properties in storage", async () => {
     const item = await Encryptor.encryptFile({
       filePath: testFilePath,
-      extraProps: { customProp: "value", anotherProp: 123 }
+      extraProps: { customProp: "value", anotherProp: 123 },
     });
     const library = await Encryptor.getStorage();
 

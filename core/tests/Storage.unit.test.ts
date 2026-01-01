@@ -1,13 +1,10 @@
 import { describe, it, expect, beforeEach, vi, afterAll } from "vitest";
-import generateSecretKey from "../crypto/generateSecretKey";
 import type { StorageItem } from "../types/public";
 import Storage from "../libs/Storage";
-import { env } from "../configs/env";
 import path from "path";
 import fs from "fs";
 
 const storagePath = path.resolve(__dirname, "../test-storage.bin");
-const secretKey = generateSecretKey(Buffer.from("mypassword"));
 const testItem: StorageItem = {
   encryptedName: "test.txt",
   originalName: "test.txt",
@@ -15,12 +12,12 @@ const testItem: StorageItem = {
   path: "test.txt",
   isHidden: false,
   _id: "mock-uid",
-  type: "file"
+  type: "file",
 };
 
 afterAll(() => {
   fs.rmSync(storagePath, {
-    force: true
+    force: true,
   });
 });
 
@@ -28,11 +25,9 @@ describe("Storage", () => {
   let storage: Storage;
 
   beforeEach(async () => {
-    storage = new Storage(
-      secretKey,
-      env.ENCODING,
-      storagePath
-    );
+    storage = new Storage(storagePath);
+    storage.updateVerifier("mock-verifier-string");
+    await storage.ready;
     vi.clearAllMocks();
   });
 
