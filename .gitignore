@@ -178,6 +178,7 @@ dist
 library.json
 storage.bin
 *.enc
+*.kira
 test.ts
 pendings.md
 tests/tmp
