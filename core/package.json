@@ -61,7 +61,7 @@
     }
   },
   "scripts": {
-    "clean": "rm -rf dist; rm -rf akira-encryptor-core-*.tgz",
+    "clean": "rimraf --glob dist \"akira-encryptor-core-*.tgz\"",
     "typecheck": "bun tsc --noEmit -p tsconfig.json",
     "tests": "bun run build && bun vitest",
     "build": "bun run clean && bun run build:types && tsup && bun run scripts/patch-cjs-requires.ts && bun run scripts/patch-mjs-imports.ts && pnpm pack",
@@ -74,6 +74,7 @@
     "@types/hidefile": "^3.0.3",
     "@types/sodium-native": "^2.3.9",
     "glob": "^11.1.0",
+    "rimraf": "^6.1.2",
     "tsup": "^8.5.1",
     "vitest": "^3.2.4"
   },
