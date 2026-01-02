@@ -27,7 +27,7 @@ async function main() {
       }
       exit = await askForOtherOperation();
     } catch (err) {
-      console.error(`\n❌ Error inesperado:\n`, err);
+      console.error(err);
       process.exit(1);
     }
   } while (!exit);
