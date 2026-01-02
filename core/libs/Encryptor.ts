@@ -560,17 +560,14 @@ class Encryptor {
       return a.name.localeCompare(b.name);
     });
 
-    // 2. Initialize skipped files counter
-    let skippedFiles = 0;
-
-    // 3. If not an internal (recursive) call
+    // 2. If not an internal (recursive) call
     if (!isInternalFlow) {
       // bcs we not show the spinner in internal flow
       this.totalFolderBytes = Encryptor.FS.getFolderSize(tempPath);
       this.stepDelay = 0;
     }
 
-    // 4. Create a p-limit instance to restrict concurrency
+    // 3. Create a p-limit instance to restrict concurrency
     const minTasks = Math.min(this.MAX_THREADS, entries.length);
     const limit = pLimit(
       Math.max(1, minTasks) // Ensure at least 1 thread
@@ -724,13 +721,6 @@ class Encryptor {
         await Encryptor.FS.removeItem(folderPath);
         mvStep?.succeed("Carpeta original reemplazada por la encriptada.");
         props.onEnd?.();
-        if (skippedFiles > 0 && !this.SILENT) {
-          utils
-            .createSpinner(
-              `Se omitieron ${skippedFiles} archivo(s) porque ya estaban cifrados.`
-            )
-            .warn();
-        }
       } catch (err) {
         await Encryptor.FS.removeItem(encryptedPath).catch(() => {});
         mvStep?.fail("Error al reemplazar la carpeta original.");
@@ -770,7 +760,6 @@ class Encryptor {
   private async _decryptFolder(props: Internal.FolderDecryptor) {
     const { folderPath, onProgress, isInternalFlow, folderItem, onEnd } = props;
     let error: Error | undefined = undefined;
-    let skippedItems = 0;
 
     // If not in internal flow, initialize indicators
     if (!isInternalFlow) {
@@ -842,13 +831,7 @@ class Encryptor {
               },
             });
           } catch (err) {
-            // Only skip if error indicates file was not registered
-            if (err instanceof Error && err.name === "FileNotRegistered") {
-              skippedItems++;
-              return; // Skip this file
-            }
-            // Any other error should abort the entire operation
-            throw err;
+            throw err; // Propagate error to abort everything
           }
         });
         filePromises.push(task);
@@ -902,15 +885,6 @@ class Encryptor {
     } finally {
       if (!isInternalFlow) {
         onEnd?.(error);
-
-        if (skippedItems > 0 && !this.SILENT) {
-          utils
-            .createSpinner(
-              `${skippedItems} file(s) were skipped because they were not registered in storage.`
-            )
-            .warn();
-        }
-
         this.resetFileIndicators();
         await this.destroy();
       }
