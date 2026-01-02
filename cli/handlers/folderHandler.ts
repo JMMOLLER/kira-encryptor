@@ -109,10 +109,9 @@ async function handleFolderAction(props: HanlderProps) {
     console.error(
       `\n❌ Error al ${
         action === "encrypt" ? "encriptar" : "desencriptar"
-      } la carpeta:\n`,
-      error
+      } la carpeta:\n`
     );
-    return;
+    return Promise.reject(error);
   }
 }
 

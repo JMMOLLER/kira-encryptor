@@ -49,7 +49,7 @@ importers:
 packages:
 
   '@akira-encryptor/core@file:../core/akira-encryptor-core-0.6.0-beta.tgz':
-    resolution: {integrity: sha512-4e5OnWfmMySQwd8EcMK41L9aTyLi1uemx0wnMZCtSDGquqBjabP9ibcDWO5WWdnCi6E7DzNGcQcVvW63BbQF2Q==, tarball: file:../core/akira-encryptor-core-0.6.0-beta.tgz}
+    resolution: {integrity: sha512-T3ah6l6+ELDFbIEuZNZy3VlZWNv6TXxUjCWP/Z55qsTSIpmz3pEwjVHVVDoR2IKNDjGoo0BtlG8fUXNMl2hMCg==, tarball: file:../core/akira-encryptor-core-0.6.0-beta.tgz}
     version: 0.6.0-beta
     peerDependencies:
       typescript: ^5

@@ -1,6 +1,7 @@
 import type { ProgressCallback } from "@akira-encryptor/core/types";
 import type { FileEncryptor } from "@akira-encryptor/core/types";
 
+import { FILE_EXTENSION } from "@akira-encryptor/core/constants";
 import * as utils from "@akira-encryptor/core/utils";
 import EncryptorClass from "@akira-encryptor/core";
 import { workerPath } from "../const/workerPath";
@@ -105,8 +106,8 @@ async function handleFileAction(props: HanlderProps) {
     }
   } catch (error) {
     progressBar.stop();
-    console.error(`\n❌ Error al procesar el archivo:\n`, error);
-    return;
+    console.error(`\n❌ Error al procesar el archivo:\n`);
+    return Promise.reject(error);
   }
 }
 
@@ -115,13 +116,16 @@ async function handleIsHiddenFile(filePath: string, Encryptor: EncryptorClass) {
   const id = path
     .basename(filePath)
     .replace(/^\./, "")
-    .replace(/\.enc$/, "");
+    .replace(FILE_EXTENSION, "");
   const item = storage.get(id);
 
   if (item?.isHidden) {
     const status = await Encryptor.revealStoredItem(item._id);
     if (status) {
-      return filePath.replace(path.basename(filePath), item._id + ".enc");
+      return filePath.replace(
+        path.basename(filePath),
+        item._id + FILE_EXTENSION
+      );
     }
   }
 
