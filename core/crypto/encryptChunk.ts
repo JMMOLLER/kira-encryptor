@@ -3,7 +3,7 @@ import type { WriteStream } from "fs";
 import sodium from "sodium-native";
 
 interface ChunkEncryptionProps {
-  SECRET_KEY: Buffer;
+  fileKey: Buffer;
   log?: WriteStream;
   chunk: Buffer;
   id: number;
@@ -14,7 +14,7 @@ interface ChunkEncryptionProps {
  * @description `[ESP]` Cifra un bloque de datos utilizando un nonce único y la clave secreta.
  */
 function encryptChunk(props: ChunkEncryptionProps): Buffer {
-  const { chunk, SECRET_KEY, log } = props;
+  const { chunk, fileKey, log } = props;
 
   // Generate nonce (Buffer)
   const nonce = generateNonce();
@@ -24,7 +24,7 @@ function encryptChunk(props: ChunkEncryptionProps): Buffer {
     chunk.length + sodium.crypto_secretbox_MACBYTES
   );
   // Perform encryption
-  sodium.crypto_secretbox_easy(encrypted, chunk, nonce, SECRET_KEY);
+  sodium.crypto_secretbox_easy(encrypted, chunk, nonce, fileKey);
 
   // Prepare 4-byte big-endian length of encrypted payload
   const lenBuf = Buffer.alloc(4);

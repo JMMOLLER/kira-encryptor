@@ -77,7 +77,7 @@ async function encryptFile(props: FileEncryptionProps): Promise<void> {
           log,
           chunk: chunkBuf,
           id: chunkCount,
-          SECRET_KEY: fileKey
+          fileKey,
         });
 
         // Send the progress
