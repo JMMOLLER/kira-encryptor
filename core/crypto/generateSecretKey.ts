@@ -5,7 +5,7 @@ import * as CRYPTO from "./constants";
 import sodium from "sodium-native";
 
 interface Result {
-  KEY: sodium.SecureBuffer;
+  KEY: sodium.SecureBuffer | Buffer;
   /**
    * Contains an hexadecimal string representing the verifier for the derived key.
    */
@@ -49,8 +49,19 @@ export default function generateSecretKey(
     throw new Error("Insecure memlimit");
   }
 
-  // create key
-  const KEY = sodium.sodium_malloc(CRYPTO.SECRET_KEY_BYTES);
+  // Electron >= 21 disallows exposing native (malloc'd) memory as JS Buffers
+  // due to V8 Memory Cage, so sodium_malloc() cannot be used safely here.
+  let KEY: Buffer | sodium.SecureBuffer;
+  let isSecure = false;
+  try {
+    const secure = sodium.sodium_malloc(CRYPTO.SECRET_KEY_BYTES);
+    isSecure = Boolean(secure.secure);
+    KEY = secure;
+  } catch {
+    console.warn("[Encryptor] Unsecure key allocation.");
+    // create key
+    KEY = Buffer.alloc(CRYPTO.SECRET_KEY_BYTES);
+  }
   const SECURE_PASSWORD = derivePassword(passphrase, BASE_SALT, opts);
   SECURE_PASSWORD.copy(KEY);
 
@@ -58,7 +69,7 @@ export default function generateSecretKey(
   if (keyVerifier) {
     const res = checkVerifier(KEY, keyVerifier);
     if (!res) {
-      sodium.sodium_mprotect_noaccess(KEY);
+      if (isSecure) sodium.sodium_mprotect_noaccess(KEY as sodium.SecureBuffer);
       sodium.sodium_memzero(KEY);
       throw new Error("Invalid passphrase");
     }
@@ -68,7 +79,7 @@ export default function generateSecretKey(
   }
 
   // set memory protections for secret key
-  sodium.sodium_mprotect_readonly(KEY);
+  if (isSecure) sodium.sodium_mprotect_readonly(KEY as sodium.SecureBuffer);
 
   // clean up
   sodium.sodium_memzero(passphrase);
