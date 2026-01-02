@@ -14,14 +14,14 @@ const workerData = wd as WorkerEncryptProps
 
 async function main() {
   const { srcPath, itemId, extraProps, EncryptorConfig } = workerData
-  const password = Buffer.from(workerData.password)
+  const PASSWORD = Buffer.from(workerData.password)
 
   if (!workerPath) {
     throw new Error('Worker path is not defined. Please check your build configuration.')
   }
 
   console.log('Starting encryptor worker with data:', EncryptorConfig)
-  const ENCRYPTOR = await Encryptor.init(password.toString(), workerPath, EncryptorConfig)
+  const ENCRYPTOR = await Encryptor.init(PASSWORD, workerPath, EncryptorConfig)
 
   const sendProgress: ProgressCallback = (processedBytes, totalBytes) => {
     parentPort!.postMessage({

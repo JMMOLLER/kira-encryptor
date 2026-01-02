@@ -5,7 +5,7 @@ import { Conf } from 'electron-conf/main'
 import { app } from 'electron'
 import { join } from 'path'
 
-const libraryPath = join(app.getPath('userData'), 'storage.json')
+const dbPath = join(app.getPath('userData'), 'storage.bin')
 
 const CONF = new Conf<Partial<ConfStoreType>>({
   defaults: {
@@ -24,7 +24,7 @@ const CONF = new Conf<Partial<ConfStoreType>>({
         minDelayPerStep: 0,
         encoding: 'base64',
         silent: true,
-        libraryPath
+        dbPath
       }
     }
   },
@@ -90,10 +90,10 @@ const CONF = new Conf<Partial<ConfStoreType>>({
                 nullable: true,
                 default: true
               },
-              libraryPath: {
+              dbPath: {
                 type: 'string',
                 nullable: true,
-                default: libraryPath
+                default: dbPath
               }
             }
           },

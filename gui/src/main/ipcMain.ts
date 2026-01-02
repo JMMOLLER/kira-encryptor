@@ -35,8 +35,8 @@ let ENCRYPTOR: BasicEncryptor
 let PASSWORD: Buffer
 
 async function initializeEncryptor() {
-  ENCRYPTOR = await Encryptor.init(PASSWORD.toString(), undefined, {
-    libraryPath: EncryptorConfig.libraryPath,
+  ENCRYPTOR = await Encryptor.init(Buffer.from(PASSWORD), undefined, {
+    dbPath: EncryptorConfig.dbPath,
     encoding: EncryptorConfig.encoding
   }) // This is a basic instance of the Encryptor class
 }
@@ -92,7 +92,6 @@ export default function registerIpcMain() {
         mainWindow?.webContents.send('onProgress', progressData)
       }
       const onEnd = async (endData: string) => {
-        await ENCRYPTOR.refreshStorage()
         mainWindow?.webContents.send('onOperationEnd', endData)
       }
       const onError = (errorData: unknown) => {
@@ -235,7 +234,7 @@ export default function registerIpcMain() {
 
   ipcMain.handle('exist-storage', async () => {
     try {
-      const storageExists = fs.existsSync(EncryptorConfig.libraryPath!)
+      const storageExists = fs.existsSync(EncryptorConfig.dbPath!)
       return storageExists
     } catch (error) {
       console.error('Error checking storage existence:', error)
