@@ -8,7 +8,7 @@ import sodium from "sodium-native";
 export const FILE_MAGIC = Buffer.from("AKRA"); // 4 bytes
 export const FILE_MAGIC_LEN = FILE_MAGIC.length;
 
-export const FILE_EXTENSION = ".akra";
+export const FILE_EXTENSION = ".kira";
 
 export const FILE_FORMAT_VERSION = 0x01;
 export const FILE_VERSION_LEN = 1; // 1 byte
