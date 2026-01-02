@@ -5,12 +5,20 @@ import sodium from "sodium-native";
  * @description `[ENG]` Derives a file encryption key from a previously derived secret key and a salt using BLAKE2b.
  * @description `[ES]` Deriva una clave de cifrado de archivo a partir de una clave secreta previamente derivada y una salt utilizando BLAKE2b.
  */
-function deriveFileKey(secretKey: Buffer, salt: Buffer): Buffer {
+function deriveFileKey(secretKey: Uint8Array, salt: Buffer): Buffer {
+  // Secret key should be Buffer necessarily
+  const SECRET_KEY = Buffer.alloc(secretKey.length);
+  // Copy the secretKey Uint8Array into the Buffer
+  SECRET_KEY.set(secretKey);
+
   // 256-bit key
   const fileKey = Buffer.alloc(CRYPTO.FILE_KEY_BYTES);
 
   // Derive the file key using BLAKE2b
-  sodium.crypto_generichash(fileKey, salt, secretKey);
+  sodium.crypto_generichash(fileKey, salt, SECRET_KEY); // this funcion only accepts Buffer
+
+  // Clear SECRET_KEY from memory
+  sodium.sodium_memzero(SECRET_KEY);
 
   return fileKey;
 }
