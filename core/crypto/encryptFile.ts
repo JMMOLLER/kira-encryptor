@@ -3,6 +3,7 @@ import { FileSystem } from "../libs/FileSystem";
 import { pipeline, Transform } from "stream";
 import encryptChunk from "./encryptChunk";
 import generateSalt from "./generateSalt";
+import * as CRYPTO from "./constants";
 import type { WriteStream } from "fs";
 import sodium from "sodium-native";
 import { promisify } from "util";
@@ -38,12 +39,11 @@ async function encryptFile(props: FileEncryptionProps): Promise<void> {
   // Prepara header
   const headerObj = {
     salt: Buffer.from(salt).toString("hex"),
-    version: 1
+    version: CRYPTO.FILE_FORMAT_VERSION,
   };
   const headerJson = Buffer.from(JSON.stringify(headerObj), "utf8");
-  const magic = Buffer.from("AKRA"); // 4 bytes
-  const version = Buffer.from([0x01]); // 1 byte
-  const headerLen = Buffer.alloc(4); // 4 bytes
+  const version = Buffer.from([CRYPTO.FILE_FORMAT_VERSION]); // 1 byte
+  const headerLen = Buffer.alloc(CRYPTO.HEADER_LEN_BYTES); // 4 bytes
   headerLen.writeUInt32BE(headerJson.length, 0);
 
   // Streams for reading and writing file
@@ -51,13 +51,13 @@ async function encryptFile(props: FileEncryptionProps): Promise<void> {
   const ws = FS.createWriteStream(tempPath, { highWaterMark: blockSize });
 
   // Write header to the beginning of the file
-  ws.write(Buffer.concat([magic, version, headerLen, headerJson]));
+  ws.write(Buffer.concat([CRYPTO.FILE_MAGIC, version, headerLen, headerJson]));
 
   // If logging is enabled, create a write stream for logging
   let log: WriteStream | undefined;
   let chunkCount = 0;
   if (props.enableLogging) {
-    log = FS.createWriteStream(filePath + ".enc.log");
+    log = FS.createWriteStream(filePath + CRYPTO.FILE_EXTENSION + ".enc.log");
     log.write(`🟢 Inicio de cifrado: ${filePath}\n`);
     log.write(`Tamaño total: ${FS.getStatFile(filePath).size} bytes\n`);
   }
@@ -87,7 +87,7 @@ async function encryptFile(props: FileEncryptionProps): Promise<void> {
       } catch (err) {
         cb(err as Error);
       }
-    }
+    },
   });
 
   // This call handles the piping of the read stream to the encrypt stream and then to the write stream

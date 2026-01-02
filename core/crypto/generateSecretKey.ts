@@ -1,6 +1,7 @@
 import { checkVerifier, generateVerifier } from "./keyVerifier";
-import type { StorageData, StorageHeader } from "../types/public";
+import type { StorageHeader } from "../types/public";
 import { derivePassword } from "./keyDerivation";
+import * as CRYPTO from "./constants";
 import sodium from "sodium-native";
 
 interface Result {
@@ -29,7 +30,7 @@ export default function generateSecretKey(
   // Get base salt from storage header
   const BASE_SALT = Buffer.from(salt, "hex");
 
-  if (BASE_SALT.length !== sodium.crypto_pwhash_SALTBYTES) {
+  if (BASE_SALT.length !== CRYPTO.SALT_BYTES) {
     throw new Error("Invalid salt length in storage header");
   }
 
@@ -41,15 +42,15 @@ export default function generateSecretKey(
   };
 
   // Security checks
-  if (opts.opslimit < sodium.crypto_pwhash_OPSLIMIT_MODERATE) {
+  if (opts.opslimit < CRYPTO.DEFAULT_OPSLIMIT) {
     throw new Error("Insecure opslimit");
   }
-  if (opts.memlimit < sodium.crypto_pwhash_MEMLIMIT_MODERATE) {
+  if (opts.memlimit < CRYPTO.DEFAULT_MEMLIMIT) {
     throw new Error("Insecure memlimit");
   }
 
   // create key
-  const KEY = sodium.sodium_malloc(32);
+  const KEY = sodium.sodium_malloc(CRYPTO.SECRET_KEY_BYTES);
   const SECURE_PASSWORD = derivePassword(passphrase, BASE_SALT, opts);
   SECURE_PASSWORD.copy(KEY);
 

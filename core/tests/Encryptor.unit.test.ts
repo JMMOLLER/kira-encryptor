@@ -5,8 +5,8 @@ import generateSalt from "../crypto/generateSalt";
 import encryptText from "../crypto/encryptText";
 import decryptText from "../crypto/decryptText";
 import EncryptorClass from "../libs/Encryptor";
+import * as CRYPTO from "../crypto/constants";
 import { env } from "../configs/env";
-import sodium from "sodium-native";
 import hidefile from "hidefile";
 import path from "path";
 import fs from "fs";
@@ -17,9 +17,9 @@ const testFolderPath = path.join(tempDir, "test-dir");
 const testFilePath = path.join(tempDir, "test-file.txt");
 const pwdBuff = Buffer.from("mypassword");
 const { KEY } = generateSecretKey(pwdBuff, {
-  kdf: sodium.crypto_pwhash_ALG_ARGON2ID13,
-  memlimit: sodium.crypto_pwhash_MEMLIMIT_MODERATE,
-  opslimit: sodium.crypto_pwhash_OPSLIMIT_MODERATE,
+  kdf: CRYPTO.DEFAULT_KDF,
+  memlimit: CRYPTO.DEFAULT_MEMLIMIT,
+  opslimit: CRYPTO.DEFAULT_OPSLIMIT,
   salt: Buffer.from(generateSalt()).toString("hex"),
   verifier: "",
 });
@@ -115,7 +115,7 @@ describe("Encryptor", () => {
 
     const encryptedFilePath = testFilePath.replace(
       path.basename(testFilePath),
-      `${res._id}.enc`
+      `${res._id}${CRYPTO.FILE_EXTENSION}`
     );
     const existTempFile = fs.existsSync(testFilePath);
     const existsEncTempFile = fs.existsSync(encryptedFilePath);
@@ -181,12 +181,12 @@ describe("Encryptor", () => {
     });
     const encHiddenFilePath = testFilePath.replace(
       path.basename(testFilePath),
-      `.${res._id}.enc`
+      `.${res._id}${CRYPTO.FILE_EXTENSION}`
     );
 
     const encryptedFilePath = testFilePath.replace(
       path.basename(testFilePath),
-      `${res._id}.enc`
+      `${res._id}${CRYPTO.FILE_EXTENSION}`
     );
 
     let hideStatus = await Encryptor.hideStoredItem(encryptedFilePath);

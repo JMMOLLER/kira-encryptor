@@ -1,3 +1,4 @@
+import { SECRET_KEY_BYTES } from "./constants";
 import sodium from "sodium-native";
 
 /**
@@ -8,7 +9,7 @@ import sodium from "sodium-native";
  */
 function generateVerifier(secretKey: Buffer): Buffer {
   // 32-byte verifier
-  const verifier = Buffer.alloc(32);
+  const verifier = Buffer.alloc(SECRET_KEY_BYTES);
   // Generate verifier using a hash of the secret key
   sodium.crypto_generichash(verifier, secretKey);
   return verifier;
@@ -24,7 +25,7 @@ function generateVerifier(secretKey: Buffer): Buffer {
 function checkVerifier(secretKey: Buffer, storedVerifier: string): boolean {
   // Compare the generated verifier with the stored verifier
   const expected = Buffer.from(storedVerifier, "hex");
-  const actual = Buffer.alloc(32); // 32-byte verifier
+  const actual = Buffer.alloc(SECRET_KEY_BYTES); // 32-byte verifier
 
   // Generate verifier using a hash of the secret key
   sodium.crypto_generichash(actual, secretKey);

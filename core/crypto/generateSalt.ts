@@ -1,3 +1,4 @@
+import { SALT_BYTES } from "./constants";
 import sodium from "sodium-native";
 
 /**
@@ -6,7 +7,7 @@ import sodium from "sodium-native";
  * @returns A Buffer containing the generated salt.
  */
 export default function generateSalt(): Buffer {
-  const salt = Buffer.alloc(sodium.crypto_pwhash_SALTBYTES);
+  const salt = Buffer.alloc(SALT_BYTES);
   sodium.randombytes_buf(salt);
   return salt;
 }

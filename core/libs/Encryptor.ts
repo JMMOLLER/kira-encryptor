@@ -1,6 +1,7 @@
 import type { StructuredSerializeOptions } from "worker_threads";
 import type { Internal, Types } from "../types";
 
+import { FILE_EXTENSION, FILE_MAGIC } from "../crypto/constants";
 import generateSecretKey from "../crypto/generateSecretKey";
 import { MessageChannel } from "worker_threads";
 import encryptText from "../crypto/encryptText";
@@ -49,10 +50,7 @@ class Encryptor {
   private totalFolderBytes = 0;
   private processedBytes = 0;
 
-  private constructor(
-    password: Buffer,
-    storageHeader: Types.StorageHeader
-  ) {
+  private constructor(password: Buffer, storageHeader: Types.StorageHeader) {
     // generate secret key from passphrase and storage header
     const { KEY, keyVerifier } = generateSecretKey(password, storageHeader);
     // Update verifier in storage if it was not set
@@ -151,11 +149,16 @@ class Encryptor {
     this.processedBytes = 0;
   }
 
+  private escapeRegExp(value: string) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
   private async visibilityHelper(itemId: string) {
-    const id = path
-      .basename(itemId)
-      .replace(/^\./, "")
-      .replace(/\.enc$/, "");
+    // Get extension regex
+    const EXT_REGEX = new RegExp(`${this.escapeRegExp(FILE_EXTENSION)}$`);
+    // Get id without extension
+    const id = path.basename(itemId).replace(/^\./, "").replace(EXT_REGEX, "");
+    // Get item from storage
     const item = await Encryptor.STORAGE.get(id);
 
     if (!item) {
@@ -163,7 +166,7 @@ class Encryptor {
     }
 
     const name = item.isHidden ? `.${id}` : id;
-    const finalName = item.type === "file" ? `${name}.enc` : name;
+    const finalName = item.type === "file" ? `${name}${FILE_EXTENSION}` : name;
     const itemPath = item.path.replace(path.basename(item.path), finalName);
 
     return { item, itemPath };
@@ -245,14 +248,20 @@ class Encryptor {
   private async _encryptFile(props: Internal.FileEncryptor) {
     const { filePath, onProgress, isInternalFlow } = props;
     let error: Error | undefined = undefined;
-    // prevent encrypting the file again
-    if (path.extname(filePath) === ".enc") {
+
+    // Check if file is already encrypted
+    const magic = Encryptor.FS.readMagic(filePath);
+    // check magic bytes
+    if (magic.equals(FILE_MAGIC)) {
       const error = new Error(
         "El archivo ya está cifrado. No se puede volver a cifrar."
       );
       error.name = "FileAlreadyEncrypted";
       return Promise.reject(error);
-    } else if (filePath.includes(".enc.log") || filePath.includes(".dec.log")) {
+    } else if (
+      filePath.includes(`${FILE_EXTENSION}.enc.log`) ||
+      filePath.includes(`${FILE_EXTENSION}.dec.log`)
+    ) {
       // skip logs file
       return Promise.reject(
         "El archivo no puede ser cifrado porque es un archivo de registro."
@@ -268,7 +277,7 @@ class Encryptor {
     const fileBaseName = path.basename(filePath, path.extname(filePath));
     const tempPath = path.join(
       Encryptor.tempDir,
-      `${fileBaseName}-${utils.generateUID()}.enc.tmp`
+      `${fileBaseName}-${utils.generateUID()}${FILE_EXTENSION}.tmp`
     );
 
     const channel = new MessageChannel();
@@ -383,9 +392,11 @@ class Encryptor {
     const { filePath, fileItem, onProgress, isInternalFlow } = props;
     let error: Error | undefined = undefined;
     // skip logs file
-    if (filePath.includes(".encrypt.log")) return Promise.resolve();
-    if (filePath.includes(".dec.tmp")) return Promise.resolve();
-    if (path.extname(filePath) !== ".enc") return Promise.resolve();
+    if (filePath.includes(`${FILE_EXTENSION}.enc.log`))
+      return Promise.resolve();
+    if (filePath.includes(`${FILE_EXTENSION}.dec.tmp`))
+      return Promise.resolve();
+    if (path.extname(filePath) !== FILE_EXTENSION) return Promise.resolve();
 
     if (!isInternalFlow) this.processedBytes = 0;
     const fileStats = Encryptor.FS.getStatFile(filePath);
@@ -395,7 +406,9 @@ class Encryptor {
 
     const tempPath = path.join(
       Encryptor.tempDir,
-      path.basename(filePath).replace(".enc", ".dec.tmp")
+      path
+        .basename(filePath)
+        .replace(FILE_EXTENSION, `${FILE_EXTENSION}.dec.tmp`)
     );
 
     const channel = new MessageChannel();
@@ -583,8 +596,8 @@ class Encryptor {
     for (const entry of entries) {
       if (entry.isFile()) {
         if (
-          entry.name.includes(".enc.log") ||
-          entry.name.includes(".dec.log")
+          entry.name.includes(`${FILE_EXTENSION}.enc.log`) ||
+          entry.name.includes(`${FILE_EXTENSION}.dec.log`)
         ) {
           continue; // Skip log files
         }
@@ -796,7 +809,10 @@ class Encryptor {
 
     for (const item of contentItems) {
       if (item.type === "file") {
-        const encryptedFilePath = path.join(folderPath, item._id + ".enc");
+        const encryptedFilePath = path.join(
+          folderPath,
+          item._id + FILE_EXTENSION
+        );
         const task = limit(async () => {
           try {
             // decryptFile uses workerPool internally
@@ -943,7 +959,7 @@ class Encryptor {
           savedItem = storageItem;
         });
       }
-      const encryptedFileName = savedItem._id + ".enc";
+      const encryptedFileName = savedItem._id + FILE_EXTENSION;
       const renamedTempFile = path.join(Encryptor.tempDir, encryptedFileName);
       const destPath = path.join(fileDir, encryptedFileName);
 
@@ -1014,7 +1030,10 @@ class Encryptor {
         throw new Error("No se pudo obtener la ruta temporal del archivo.");
       }
 
-      const fileName = path.basename(folderPath).replace(/\.enc$/, "");
+      // Get extension regex
+      const EXT_REGEX = new RegExp(`${this.escapeRegExp(FILE_EXTENSION)}$`);
+      // Get file name without extension
+      const fileName = path.basename(folderPath).replace(EXT_REGEX, "");
 
       const storedItem = await Encryptor.STORAGE.get(fileName);
       const { originalName } = fileItem || storedItem || {};

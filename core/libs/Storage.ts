@@ -3,9 +3,9 @@ import type { Types } from "../types";
 import generateSalt from "../crypto/generateSalt";
 import { decode, encode } from "@msgpack/msgpack";
 import generateUID from "../utils/generateUID";
+import * as CRYPTO from "../crypto/constants";
 import { FileSystem } from "./FileSystem";
 import { env } from "../configs/env";
-import sodium from "sodium-native";
 import Nedb from "@seald-io/nedb";
 
 type BasicStorageItem = Omit<Types.FileItem | Types.FolderItem, "_id">;
@@ -40,9 +40,9 @@ class Storage {
 
     // Initialize storage header with default values
     this.storageHeader = {
-      kdf: sodium.crypto_pwhash_ALG_ARGON2ID13,
-      memlimit: sodium.crypto_pwhash_MEMLIMIT_MODERATE,
-      opslimit: sodium.crypto_pwhash_OPSLIMIT_MODERATE,
+      kdf: CRYPTO.DEFAULT_KDF,
+      memlimit: CRYPTO.DEFAULT_MEMLIMIT,
+      opslimit: CRYPTO.DEFAULT_OPSLIMIT,
       salt: Buffer.from(generateSalt()).toString("hex"),
       verifier: "",
     };

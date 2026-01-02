@@ -193,6 +193,23 @@ export class FileSystem {
   }
 
   /**
+   * @description `[ENG]` Read the magic bytes from a file.
+   * @description `[ESP]` Lee los bytes mágicos de un archivo.
+   * @param path `string` - The path of the file to be read.
+   * @param length `number` - The number of bytes to read (default: 4).
+   */
+  readMagic(path: string, length = 4): Buffer {
+    const fd = fs.openSync(path, "r");
+    try {
+      const buffer = Buffer.alloc(length);
+      fs.readSync(fd, buffer, 0, length, 0);
+      return buffer;
+    } finally {
+      fs.closeSync(fd);
+    }
+  }
+
+  /**
    * @description `[ENG]` Replace a file with a new one.
    * @description `[ESP]` Reemplaza un archivo por uno nuevo.
    * @param prevPath The path of the file to be replaced
