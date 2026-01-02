@@ -48,6 +48,16 @@
         "types": "./dist/cjs/types/workers/index.d.ts",
         "default": "./dist/cjs/workers/index.cjs"
       }
+    },
+    "./constants": {
+      "import": {
+        "types": "./dist/esm/types/crypto/constants.d.ts",
+        "default": "./dist/esm/crypto/constants.js"
+      },
+      "require": {
+        "types": "./dist/cjs/types/crypto/constants.d.ts",
+        "default": "./dist/cjs/crypto/constants.cjs"
+      }
     }
   },
   "typesVersions": {
