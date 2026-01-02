@@ -99,7 +99,6 @@ export type BufferEncoding = "base64" | "base64url" | "hex" | "latin1";
 
 export interface BasicEncryptor {
   getStorage: () => Promise<Map<string, StorageItem>>;
-  refreshStorage: () => Promise<void>;
   revealStoredItem: (item: string) => Promise<boolean>;
   hideStoredItem: (item: string) => Promise<boolean>;
 }

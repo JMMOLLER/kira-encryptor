@@ -103,7 +103,6 @@ class Encryptor {
     if (!workerPath) {
       return {
         getStorage: instance.getStorage,
-        refreshStorage: instance.refreshStorage,
         revealStoredItem: instance.revealStoredItem.bind(instance),
         hideStoredItem: instance.hideStoredItem.bind(instance),
       };
@@ -216,14 +215,6 @@ class Encryptor {
    */
   async getStorage() {
     return await Encryptor.STORAGE.getAll();
-  }
-
-  /**
-   * @description `[ENG]` Refreshes the storage to ensure it is up-to-date.
-   * @description `[ES]` Actualiza el almacenamiento para asegurarse de que esté al día.
-   */
-  async refreshStorage() {
-    await Encryptor.STORAGE.refresh();
   }
 
   /**
