@@ -222,19 +222,23 @@ class Encryptor {
    * @description `[ES]` Cifra un archivo utilizando la clave secreta y lo guarda con un nuevo nombre.
    */
   async encryptFile(props: Types.FileEncryptor) {
-    await Encryptor.STORAGE.ready; // Ensure storage is ready
+    try {
+      await Encryptor.STORAGE.ready; // Ensure storage is ready
 
-    const stats = Encryptor.FS.getStatFile(props.filePath);
-    if (!stats.isFile()) {
-      return Promise.reject(
-        new Error("La ruta proporcionada no es un archivo válido.")
-      );
+      const stats = Encryptor.FS.getStatFile(props.filePath);
+      if (!stats.isFile()) {
+        return Promise.reject(
+          new Error("La ruta proporcionada no es un archivo válido.")
+        );
+      }
+
+      return this._encryptFile({
+        ...props,
+        isInternalFlow: false,
+      });
+    } catch (error) {
+      return Promise.reject(error);
     }
-
-    return this._encryptFile({
-      ...props,
-      isInternalFlow: false,
-    });
   }
   private async _encryptFile(props: Internal.FileEncryptor) {
     const { filePath, onProgress, isInternalFlow } = props;
@@ -245,7 +249,9 @@ class Encryptor {
     // check magic bytes
     if (magic.equals(FILE_MAGIC)) {
       const error = new Error(
-        "El archivo ya está cifrado. No se puede volver a cifrar."
+        `Cannot re-encrypt file '${path.basename(
+          filePath
+        )}' because it is already encrypted.`
       );
       error.name = "FileAlreadyEncrypted";
       return Promise.reject(error);
@@ -365,19 +371,23 @@ class Encryptor {
    * @description `[ES]` Descifra un archivo utilizando la clave secreta y lo guarda con el nombre original.
    */
   async decryptFile(props: Types.FileDecryptor) {
-    await Encryptor.STORAGE.ready; // Ensure storage is ready
+    try {
+      await Encryptor.STORAGE.ready; // Ensure storage is ready
 
-    const stats = Encryptor.FS.getStatFile(props.filePath);
-    if (!stats.isFile()) {
-      return Promise.reject(
-        new Error("La ruta proporcionada no es un archivo válido.")
-      );
+      const stats = Encryptor.FS.getStatFile(props.filePath);
+      if (!stats.isFile()) {
+        return Promise.reject(
+          new Error("La ruta proporcionada no es un archivo válido.")
+        );
+      }
+
+      return this._decryptFile({
+        ...props,
+        isInternalFlow: false,
+      });
+    } catch (error) {
+      return Promise.reject(error);
     }
-
-    return this._decryptFile({
-      ...props,
-      isInternalFlow: false,
-    });
   }
   private async _decryptFile(props: Internal.FileDecryptor) {
     const { filePath, fileItem, onProgress, isInternalFlow } = props;
@@ -495,25 +505,42 @@ class Encryptor {
    * @description `[ES]` Cifra recursivamente todos los archivos dentro de una carpeta.
    */
   async encryptFolder(props: Types.FolderEncryptor) {
-    await Encryptor.STORAGE.ready; // Ensure storage is ready
+    try {
+      await Encryptor.STORAGE.ready; // Ensure storage is ready
 
-    const stats = Encryptor.FS.getStatFile(props.folderPath);
-    if (stats.isFile()) {
-      return Promise.reject(
-        new Error("La ruta proporcionada no es un archivo válido.")
-      );
+      const stats = Encryptor.FS.getStatFile(props.folderPath);
+      if (stats.isFile()) {
+        return Promise.reject(
+          new Error("La ruta proporcionada no es un archivo válido.")
+        );
+      }
+
+      return this._encryptFolder({
+        ...props,
+        isInternalFlow: false,
+      });
+    } catch (error) {
+      return Promise.reject(error);
     }
-
-    return this._encryptFolder({
-      ...props,
-      isInternalFlow: false,
-    });
   }
   private async _encryptFolder(props: Internal.FolderEncryptor) {
     const { folderPath, onProgress, isInternalFlow } = props;
 
     const baseName = path.basename(folderPath);
     let tempPath = folderPath;
+
+    // Only check for existing encrypted folder in non-internal flow
+    // Prevents larger overhead in recursive calls
+    // If a folder containing an encrypted file exists, then the entire operation will be canceled.
+    if (!isInternalFlow && (await Encryptor.STORAGE.get(baseName))) {
+      const error = new Error(
+        `Cannot re-encrypt folder with name '${baseName}' because it is already exists in storage.`
+      );
+      error.name = "FolderAlreadyEncrypted";
+      return Promise.reject(error);
+    }
+
+    // Create a temporary copy of the folder if not in internal flow
     if (!isInternalFlow) {
       tempPath = path.join(Encryptor.tempDir, baseName);
       const exist = Encryptor.FS.itemExists(tempPath);
@@ -522,7 +549,7 @@ class Encryptor {
       }
       await Encryptor.FS.copyItem(folderPath, tempPath);
     } else if (props.tempPath) {
-      tempPath = props.tempPath;
+      tempPath = props.tempPath; // Use provided tempPath in internal flow
     }
 
     // 1. Read and sort directory entries: directories first, then files alphabetically
@@ -606,11 +633,6 @@ class Encryptor {
             subFile.path = subFile.path.replace(tempPath, folderPath);
             return subFile;
           } catch (err) {
-            // Only skip files that are already encrypted
-            if (err instanceof Error && err.name === "FileAlreadyEncrypted") {
-              skippedFiles++;
-              return null;
-            }
             // Propagate any other error to abort everything
             throw err;
           }
@@ -727,19 +749,23 @@ class Encryptor {
    * @description `[ES]` Descifra recursivamente todos los archivos dentro de una carpeta.
    */
   async decryptFolder(props: Types.FolderDecryptor) {
-    await Encryptor.STORAGE.ready; // Ensure storage is ready
+    try {
+      await Encryptor.STORAGE.ready; // Ensure storage is ready
 
-    const stats = Encryptor.FS.getStatFile(props.folderPath);
-    if (stats.isFile()) {
-      return Promise.reject(
-        new Error("La ruta proporcionada no es un archivo válido.")
-      );
+      const stats = Encryptor.FS.getStatFile(props.folderPath);
+      if (stats.isFile()) {
+        return Promise.reject(
+          new Error("La ruta proporcionada no es un archivo válido.")
+        );
+      }
+
+      return this._decryptFolder({
+        ...props,
+        isInternalFlow: false,
+      });
+    } catch (error) {
+      return Promise.reject(error);
     }
-
-    return this._decryptFolder({
-      ...props,
-      isInternalFlow: false,
-    });
   }
   private async _decryptFolder(props: Internal.FolderDecryptor) {
     const { folderPath, onProgress, isInternalFlow, folderItem, onEnd } = props;
