@@ -291,9 +291,18 @@ class Encryptor {
                 break;
               }
 
+              // close port is not needed here, will be closed in finally
               case "error": {
-                channel.port2.close();
-                reject(new Error(message.error));
+                // initially create a generic error
+                let err = new Error(message.error);
+                // if error object is provided, reconstruct the Error
+                if (typeof message.error === "object") {
+                  err = Object.assign(new Error(message.error.message), {
+                    name: message.error.name,
+                    stack: message.error.stack,
+                  });
+                }
+                reject(err);
                 break;
               }
 

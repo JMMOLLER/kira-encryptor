@@ -26,9 +26,22 @@ export default async function run(params: WorkerTask) {
     port.postMessage({ type: "done" });
     return true;
   } catch (error) {
+    // Send error back to the main thread
+    let e: string | Error = String(error);
+
+    // If it's an Error object, extract its message and stack
+    if (error instanceof Error) {
+      e = {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+      };
+    }
+
+    // Send the error back to the main thread
     port.postMessage({
       type: "error",
-      error: error instanceof Error ? error.message : String(error),
+      error: e,
     });
   }
 }
