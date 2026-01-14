@@ -58,7 +58,7 @@ class Storage {
    * @description `[ENG]` Loads the database from the file and populates the in-memory database.
    * @description `[ESP]` Carga la base de datos desde el archivo y llena la base de datos en memoria.
    */
-  private async loadFromFile() {
+  async loadFromFile() {
     try {
       // Read the database file and parse its contents.
       const data = this.getStorageContent();
@@ -74,6 +74,9 @@ class Storage {
 
       // Set the storage header
       this.storageHeader = data.header;
+
+      // Clear existing data in the in-memory database.
+      await Storage.db.removeAsync({}, { multi: true });
 
       // Insert each document into the database.
       for (const item of Object.values(data.body)) {
@@ -145,7 +148,7 @@ class Storage {
       }
 
       const buffer = Buffer.from(encode(data)); // Encode the data using msgpack
-      await Storage.fs.createFile(this.dbPath, buffer); // Save the encoded buffer to the database file
+      await Storage.fs.createFile(this.dbPath, buffer, true); // Save the encoded buffer to the database file
     } catch (error) {
       return Promise.reject(error as Error);
     }
