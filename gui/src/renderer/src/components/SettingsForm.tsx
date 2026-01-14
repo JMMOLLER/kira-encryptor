@@ -8,6 +8,7 @@ import { useCountdown } from '@renderer/hooks/useContdown'
 import * as consts from '../constants/settingsForm.const'
 import { useMenuItem } from '@renderer/hooks/useMenuItem'
 import { ExportOutlined } from '@ant-design/icons'
+import { version } from '../../../../package.json'
 import { SliderProps } from 'antd/es/slider'
 import { Icon } from '@iconify/react'
 
@@ -145,7 +146,7 @@ function SettingsForm() {
       open={menuItem === 'settings'}
       onCancel={() => setMenuItem()}
       onOk={() => form.submit()}
-      className="my-8!"
+      className="my-8! relative"
       destroyOnHidden
       title={
         <h1 className="text-lg font-semibold! inline-flex items-center">
@@ -288,6 +289,8 @@ function SettingsForm() {
             </Button>
           </Popconfirm>
         </div>
+
+        <span className="absolute left-10 bottom-6 text-gray-400">Version: {version}</span>
       </Form>
     </Modal>
   )
