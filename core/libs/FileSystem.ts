@@ -64,16 +64,26 @@ export class FileSystem {
   /**
    * @description `[ENG]` Create a file in the filesystem. If the file already exists, it will be overwritten.
    * @description `[ESP]` Crea un archivo en el sistema de archivos. Si el archivo ya existe, lo sobrescribe.
-   * @param dirPath `string` - The path of the directory where the file will be created, including the file name and extension.
-   * @param content `any` - The content to be written to the file.
+   * @param dirPath - The path of the directory where the file will be created, including the file name and extension.
+   * @param content - The content to be written to the file.
+   * @param syncToDisk - Whether to synchronize the file to disk after writing (default: false).
    */
-  createFile(dirPath: string, content: NodeJS.ArrayBufferView | string) {
-    return new Promise((resolve, reject) =>
-      fs.writeFile(dirPath, content, (err) => {
-        if (err) reject(err);
-        else resolve(void 0);
-      })
-    );
+  async createFile(
+    dirPath: string,
+    content: Uint8Array | string,
+    syncToDisk = false
+  ): Promise<void> {
+    const file = await fs.promises.open(dirPath, "w");
+
+    try {
+      await file.writeFile(content);
+
+      if (syncToDisk) {
+        await file.sync(); // Ensure data is flushed to disk
+      }
+    } finally {
+      await file.close();
+    }
   }
 
   /**
