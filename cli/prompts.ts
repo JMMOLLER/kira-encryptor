@@ -1,6 +1,6 @@
+import { CRYPTO_BASE } from "@akira-encryptor/core/constants";
 import type { FileItem, FolderItem } from "@akira-encryptor/core/types";
 import Encryptor, { FileSystem } from "@akira-encryptor/core";
-import * as CRYPTO from "@akira-encryptor/core/constants";
 import * as utils from "@akira-encryptor/core/utils";
 import { workerPath } from "./const/workerPath";
 import sodium from "sodium-native";
@@ -47,7 +47,7 @@ export async function askForOtherOperation() {
 // IMPORTANT: `@akira-encryptor/core` wipes (memzero) the passphrase Buffer for safety.
 // So we must NOT cache the passphrase as a Buffer instance and reuse it.
 const credential: SecureCredential = {
-  password: sodium.sodium_malloc(CRYPTO.SECRET_KEY_BYTES), // Placeholder for the password
+  password: sodium.sodium_malloc(CRYPTO_BASE.SECRET_KEY_BYTES), // Placeholder for the password
   ready: false,
 };
 
@@ -107,7 +107,7 @@ export async function askUserActions() {
           title: item.path + (item.isHidden ? " (*)" : ""),
           value: item.path.replace(
             item.originalName!,
-            item.type === "folder" ? named : named + CRYPTO.FILE_EXTENSION
+            item.type === "folder" ? named : named + CRYPTO_BASE.FILE_EXTENSION
           ),
         };
       });

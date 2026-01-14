@@ -1,7 +1,7 @@
 import type { ProgressCallback } from "@akira-encryptor/core/types";
 import type { FileEncryptor } from "@akira-encryptor/core/types";
 
-import { FILE_EXTENSION } from "@akira-encryptor/core/constants";
+import { CRYPTO_BASE } from "@akira-encryptor/core/constants";
 import * as utils from "@akira-encryptor/core/utils";
 import EncryptorClass from "@akira-encryptor/core";
 import { workerPath } from "../const/workerPath";
@@ -116,7 +116,7 @@ async function handleIsHiddenFile(filePath: string, Encryptor: EncryptorClass) {
   const id = path
     .basename(filePath)
     .replace(/^\./, "")
-    .replace(FILE_EXTENSION, "");
+    .replace(CRYPTO_BASE.FILE_EXTENSION, "");
   const item = storage.get(id);
 
   if (item?.isHidden) {
@@ -124,7 +124,7 @@ async function handleIsHiddenFile(filePath: string, Encryptor: EncryptorClass) {
     if (status) {
       return filePath.replace(
         path.basename(filePath),
-        item._id + FILE_EXTENSION
+        item._id + CRYPTO_BASE.FILE_EXTENSION
       );
     }
   }
