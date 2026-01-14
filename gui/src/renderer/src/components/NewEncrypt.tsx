@@ -1,5 +1,6 @@
 import { Button, FloatButton, Form, Input, InputProps, Modal, Space } from 'antd'
 import { usePendingOperation } from '@renderer/hooks/usePendingOperation'
+import { FILE_EXTENSION } from '@akira-encryptor/core/constants/base'
 import { useNewOperation } from '@renderer/hooks/useNewOperation'
 import { useMenuItem } from '@renderer/hooks/useMenuItem'
 import { PlusOutlined } from '@ant-design/icons'
@@ -83,7 +84,7 @@ function NewEncrypt() {
         type: 'error',
         message: `Ya existe una operación pendiente para el ${menuItem === 'files' ? 'archivo' : 'directorio'} seleccionado.`
       })
-    } else if (selectedPath.endsWith('.enc')) {
+    } else if (selectedPath.endsWith(FILE_EXTENSION)) {
       setStatus({
         type: 'error',
         message: `El archivo seleccionado ya esta encriptado. Por favor, seleccione otro.`
