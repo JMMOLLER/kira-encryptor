@@ -1,4 +1,4 @@
-import { SALT_BYTES } from "./constants";
+import { SALT_BYTES } from "./constants/node";
 import sodium from "sodium-native";
 
 /**

@@ -1,4 +1,4 @@
-import * as CRYPTO from "./constants";
+import { CRYPTO_BASE, CRYPTO_NODE } from "./constants/index";
 import sodium from "sodium-native";
 
 /**
@@ -12,7 +12,7 @@ function deriveFileKey(secretKey: Uint8Array, salt: Buffer): Buffer {
   SECRET_KEY.set(secretKey);
 
   // 256-bit key
-  const fileKey = Buffer.alloc(CRYPTO.FILE_KEY_BYTES);
+  const fileKey = Buffer.alloc(CRYPTO_BASE.FILE_KEY_BYTES);
 
   // Derive the file key using BLAKE2b
   sodium.crypto_generichash(fileKey, salt, SECRET_KEY); // this funcion only accepts Buffer
@@ -38,10 +38,10 @@ interface Opts {
  * - algo: sodium.crypto_pwhash_ALG_ARGON2ID13
  */
 function derivePassword(password: Buffer, salt: Buffer, opts?: Opts): Buffer {
-  const key = Buffer.alloc(CRYPTO.SECRET_KEY_BYTES); // 256-bit key
-  const opslimit = opts?.opslimit ?? CRYPTO.DEFAULT_OPSLIMIT;
-  const memlimit = opts?.memlimit ?? CRYPTO.DEFAULT_MEMLIMIT;
-  const algo = opts?.algo ?? CRYPTO.DEFAULT_KDF;
+  const key = Buffer.alloc(CRYPTO_BASE.SECRET_KEY_BYTES); // 256-bit key
+  const opslimit = opts?.opslimit ?? CRYPTO_NODE.DEFAULT_OPSLIMIT;
+  const memlimit = opts?.memlimit ?? CRYPTO_NODE.DEFAULT_MEMLIMIT;
+  const algo = opts?.algo ?? CRYPTO_NODE.DEFAULT_KDF;
 
   sodium.crypto_pwhash(key, password, salt, opslimit, memlimit, algo);
 

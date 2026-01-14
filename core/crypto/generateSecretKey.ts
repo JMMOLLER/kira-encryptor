@@ -1,7 +1,7 @@
 import { checkVerifier, generateVerifier } from "./keyVerifier";
+import { CRYPTO_NODE, CRYPTO_BASE } from "./constants/index";
 import type { StorageHeader } from "../types/public";
 import { derivePassword } from "./keyDerivation";
-import * as CRYPTO from "./constants";
 import sodium from "sodium-native";
 
 interface Result {
@@ -30,7 +30,7 @@ export default function generateSecretKey(
   // Get base salt from storage header
   const BASE_SALT = Buffer.from(salt, "hex");
 
-  if (BASE_SALT.length !== CRYPTO.SALT_BYTES) {
+  if (BASE_SALT.length !== CRYPTO_NODE.SALT_BYTES) {
     throw new Error("Invalid salt length in storage header");
   }
 
@@ -42,10 +42,10 @@ export default function generateSecretKey(
   };
 
   // Security checks
-  if (opts.opslimit < CRYPTO.DEFAULT_OPSLIMIT) {
+  if (opts.opslimit < CRYPTO_NODE.DEFAULT_OPSLIMIT) {
     throw new Error("Insecure opslimit");
   }
-  if (opts.memlimit < CRYPTO.DEFAULT_MEMLIMIT) {
+  if (opts.memlimit < CRYPTO_NODE.DEFAULT_MEMLIMIT) {
     throw new Error("Insecure memlimit");
   }
 
@@ -54,13 +54,13 @@ export default function generateSecretKey(
   let KEY: Buffer | sodium.SecureBuffer;
   let isSecure = false;
   try {
-    const secure = sodium.sodium_malloc(CRYPTO.SECRET_KEY_BYTES);
+    const secure = sodium.sodium_malloc(CRYPTO_BASE.SECRET_KEY_BYTES);
     isSecure = Boolean(secure.secure);
     KEY = secure;
   } catch {
     console.warn("[Encryptor] Unsecure key allocation.");
     // create key
-    KEY = Buffer.alloc(CRYPTO.SECRET_KEY_BYTES);
+    KEY = Buffer.alloc(CRYPTO_BASE.SECRET_KEY_BYTES);
   }
   const SECURE_PASSWORD = derivePassword(passphrase, BASE_SALT, opts);
   SECURE_PASSWORD.copy(KEY);

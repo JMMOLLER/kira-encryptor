@@ -1,8 +1,8 @@
+import { CRYPTO_BASE, CRYPTO_NODE } from "./constants";
 import { deriveFileKey } from "./keyDerivation";
 import { FileSystem } from "../libs/FileSystem";
 import { Transform, pipeline } from "stream";
 import decryptChunk from "./decryptChunk";
-import * as CRYPTO from "./constants";
 import { open } from "fs/promises";
 import { promisify } from "util";
 
@@ -29,19 +29,23 @@ async function decryptFile(props: FileDecryptionProps): Promise<void> {
   try {
     // First 9 bytes: 4 magic + 1 version + 4 headerLen
     const FIXED_HEADER_LEN =
-      CRYPTO.FILE_MAGIC_LEN + CRYPTO.FILE_VERSION_LEN + CRYPTO.HEADER_LEN_BYTES;
+      CRYPTO_BASE.FILE_MAGIC_LEN +
+      CRYPTO_BASE.FILE_VERSION_LEN +
+      CRYPTO_BASE.HEADER_LEN_BYTES;
     const headBuf = Buffer.alloc(FIXED_HEADER_LEN);
     const { bytesRead } = await fd.read(headBuf, 0, headBuf.length, 0);
     if (bytesRead < headBuf.length) {
       throw new Error("Archivo demasiado corto: imposible leer header.");
     }
 
-    const magic = headBuf.subarray(0, CRYPTO.FILE_MAGIC_LEN).toString("ascii");
+    const magic = headBuf
+      .subarray(0, CRYPTO_BASE.FILE_MAGIC_LEN)
+      .toString("ascii");
     const headerLen = headBuf.readUInt32BE(
-      CRYPTO.FILE_MAGIC_LEN + CRYPTO.FILE_VERSION_LEN
+      CRYPTO_BASE.FILE_MAGIC_LEN + CRYPTO_BASE.FILE_VERSION_LEN
     );
 
-    if (magic !== CRYPTO.FILE_MAGIC.toString("ascii")) {
+    if (magic !== CRYPTO_BASE.FILE_MAGIC.toString("ascii")) {
       throw new Error(
         "Magic inválido: no es un archivo cifrado en formato esperado."
       );
@@ -74,7 +78,7 @@ async function decryptFile(props: FileDecryptionProps): Promise<void> {
     }
     const saltHex: string = headerObj.salt;
     const saltBuf = Buffer.from(saltHex, "hex");
-    if (saltBuf.length !== CRYPTO.SALT_BYTES) {
+    if (saltBuf.length !== CRYPTO_NODE.SALT_BYTES) {
       throw new Error("Salt con tamaño incorrecto en el header.");
     }
     const salt = Buffer.from(saltBuf);
@@ -95,7 +99,9 @@ async function decryptFile(props: FileDecryptionProps): Promise<void> {
     // If logging is enabled, create a write stream for logging
     let log: ReturnType<typeof FS.createWriteStream> | null = null;
     if (props.enableLogging) {
-      log = FS.createWriteStream(filePath + CRYPTO.FILE_EXTENSION + ".dec.log");
+      log = FS.createWriteStream(
+        filePath + CRYPTO_BASE.FILE_EXTENSION + ".dec.log"
+      );
       log.write(`🟢 Inicio de cifrado: ${filePath}\n`);
       log.write(`Tamaño total: ${FS.getStatFile(filePath).size} bytes\n`);
       log.write(`Header: ${JSON.stringify(headerObj)}\n`);
@@ -116,31 +122,35 @@ async function decryptFile(props: FileDecryptionProps): Promise<void> {
         try {
           while (
             leftover.length - offset >=
-            CRYPTO.NONCE_BYTES + CRYPTO.HEADER_LEN_BYTES + CRYPTO.MAC_BYTES
+            CRYPTO_NODE.NONCE_BYTES +
+              CRYPTO_BASE.HEADER_LEN_BYTES +
+              CRYPTO_NODE.MAC_BYTES
           ) {
             // Increment the chunk count
             (this as any)._chunkCount++;
 
             const chunkNonce = leftover.subarray(
               offset,
-              offset + CRYPTO.NONCE_BYTES
+              offset + CRYPTO_NODE.NONCE_BYTES
             );
             const lenBuf = leftover.subarray(
-              offset + CRYPTO.NONCE_BYTES,
-              offset + CRYPTO.NONCE_BYTES + CRYPTO.HEADER_LEN_BYTES
+              offset + CRYPTO_NODE.NONCE_BYTES,
+              offset + CRYPTO_NODE.NONCE_BYTES + CRYPTO_BASE.HEADER_LEN_BYTES
             );
             const encryptedLen = lenBuf.readUInt32BE(0);
 
             // Check if we have enough data for the encrypted chunk
             if (
               leftover.length - offset <
-              CRYPTO.NONCE_BYTES + CRYPTO.HEADER_LEN_BYTES + encryptedLen
+              CRYPTO_NODE.NONCE_BYTES +
+                CRYPTO_BASE.HEADER_LEN_BYTES +
+                encryptedLen
             )
               break;
 
             const { newOffset, plain } = decryptChunk({
               id: (this as any)._chunkCount,
-              nonceLen: CRYPTO.NONCE_BYTES,
+              nonceLen: CRYPTO_NODE.NONCE_BYTES,
               SECRET_KEY: fileKey,
               encryptedLen,
               chunkNonce,
@@ -153,7 +163,9 @@ async function decryptFile(props: FileDecryptionProps): Promise<void> {
 
             // Send the progress
             onProgress?.(
-              CRYPTO.NONCE_BYTES + CRYPTO.HEADER_LEN_BYTES + encryptedLen
+              CRYPTO_NODE.NONCE_BYTES +
+                CRYPTO_BASE.HEADER_LEN_BYTES +
+                encryptedLen
             );
 
             // Log the chunk details if logging is enabled

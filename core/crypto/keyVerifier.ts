@@ -1,4 +1,4 @@
-import { SECRET_KEY_BYTES } from "./constants";
+import { SECRET_KEY_BYTES } from "./constants/base";
 import sodium from "sodium-native";
 
 /**

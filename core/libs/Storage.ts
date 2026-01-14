@@ -2,8 +2,8 @@ import type { Types } from "../types";
 
 import generateSalt from "../crypto/generateSalt";
 import { decode, encode } from "@msgpack/msgpack";
+import { CRYPTO_NODE } from "../crypto/constants";
 import generateUID from "../utils/generateUID";
-import * as CRYPTO from "../crypto/constants";
 import { FileSystem } from "./FileSystem";
 import { env } from "../configs/env";
 import Nedb from "@seald-io/nedb";
@@ -40,9 +40,9 @@ class Storage {
 
     // Initialize storage header with default values
     this.storageHeader = {
-      kdf: CRYPTO.DEFAULT_KDF,
-      memlimit: CRYPTO.DEFAULT_MEMLIMIT,
-      opslimit: CRYPTO.DEFAULT_OPSLIMIT,
+      kdf: CRYPTO_NODE.DEFAULT_KDF,
+      memlimit: CRYPTO_NODE.DEFAULT_MEMLIMIT,
+      opslimit: CRYPTO_NODE.DEFAULT_OPSLIMIT,
       salt: Buffer.from(generateSalt()).toString("hex"),
       verifier: "",
     };

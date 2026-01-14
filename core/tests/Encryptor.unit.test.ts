@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { CRYPTO_BASE, CRYPTO_NODE } from "../crypto/constants";
 import generateSecretKey from "../crypto/generateSecretKey";
 import generateNonce from "../crypto/generateNonce";
 import generateSalt from "../crypto/generateSalt";
 import encryptText from "../crypto/encryptText";
 import decryptText from "../crypto/decryptText";
 import EncryptorClass from "../libs/Encryptor";
-import * as CRYPTO from "../crypto/constants";
 import { env } from "../configs/env";
 import hidefile from "hidefile";
 import path from "path";
@@ -17,9 +17,9 @@ const testFolderPath = path.join(tempDir, "test-dir");
 const testFilePath = path.join(tempDir, "test-file.txt");
 const pwdBuff = Buffer.from("mypassword");
 const { KEY } = generateSecretKey(pwdBuff, {
-  kdf: CRYPTO.DEFAULT_KDF,
-  memlimit: CRYPTO.DEFAULT_MEMLIMIT,
-  opslimit: CRYPTO.DEFAULT_OPSLIMIT,
+  kdf: CRYPTO_NODE.DEFAULT_KDF,
+  memlimit: CRYPTO_NODE.DEFAULT_MEMLIMIT,
+  opslimit: CRYPTO_NODE.DEFAULT_OPSLIMIT,
   salt: Buffer.from(generateSalt()).toString("hex"),
   verifier: "",
 });
@@ -115,7 +115,7 @@ describe("Encryptor", () => {
 
     const encryptedFilePath = testFilePath.replace(
       path.basename(testFilePath),
-      `${res._id}${CRYPTO.FILE_EXTENSION}`
+      `${res._id}${CRYPTO_BASE.FILE_EXTENSION}`
     );
     const existTempFile = fs.existsSync(testFilePath);
     const existsEncTempFile = fs.existsSync(encryptedFilePath);
@@ -181,12 +181,12 @@ describe("Encryptor", () => {
     });
     const encHiddenFilePath = testFilePath.replace(
       path.basename(testFilePath),
-      `.${res._id}${CRYPTO.FILE_EXTENSION}`
+      `.${res._id}${CRYPTO_BASE.FILE_EXTENSION}`
     );
 
     const encryptedFilePath = testFilePath.replace(
       path.basename(testFilePath),
-      `${res._id}${CRYPTO.FILE_EXTENSION}`
+      `${res._id}${CRYPTO_BASE.FILE_EXTENSION}`
     );
 
     let hideStatus = await Encryptor.hideStoredItem(encryptedFilePath);

@@ -3,7 +3,7 @@ import { FileSystem } from "../libs/FileSystem";
 import { pipeline, Transform } from "stream";
 import encryptChunk from "./encryptChunk";
 import generateSalt from "./generateSalt";
-import * as CRYPTO from "./constants";
+import * as CRYPTO from "./constants/base";
 import type { WriteStream } from "fs";
 import sodium from "sodium-native";
 import { promisify } from "util";

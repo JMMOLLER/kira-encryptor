@@ -1,7 +1,7 @@
 import type { StructuredSerializeOptions } from "worker_threads";
 import type { Internal, Types } from "../types";
 
-import { FILE_EXTENSION, FILE_MAGIC } from "../crypto/constants";
+import { FILE_EXTENSION, FILE_MAGIC } from "../crypto/constants/base";
 import generateSecretKey from "../crypto/generateSecretKey";
 import { MessageChannel } from "worker_threads";
 import encryptText from "../crypto/encryptText";

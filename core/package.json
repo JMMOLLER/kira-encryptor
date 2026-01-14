@@ -51,12 +51,22 @@
     },
     "./constants": {
       "import": {
-        "types": "./dist/esm/types/crypto/constants.d.ts",
-        "default": "./dist/esm/crypto/constants.js"
+        "types": "./dist/esm/types/crypto/constants/index.d.ts",
+        "default": "./dist/esm/crypto/constants/index.js"
       },
       "require": {
-        "types": "./dist/cjs/types/crypto/constants.d.ts",
-        "default": "./dist/cjs/crypto/constants.cjs"
+        "types": "./dist/cjs/types/crypto/constants/index.d.ts",
+        "default": "./dist/cjs/crypto/constants/index.cjs"
+      }
+    },
+    "./constants/base": {
+      "import": {
+        "types": "./dist/esm/types/crypto/constants/base.d.ts",
+        "default": "./dist/esm/crypto/constants/base.js"
+      },
+      "require": {
+        "types": "./dist/cjs/types/crypto/constants/base.d.ts",
+        "default": "./dist/cjs/crypto/constants/base.cjs"
       }
     }
   },
@@ -67,6 +77,12 @@
       ],
       "utils": [
         "./dist/esm/types/utils/index.d.ts"
+      ],
+      "constants": [
+        "./dist/esm/types/crypto/constants/index.d.ts"
+      ],
+      "constants/base": [
+        "./dist/esm/types/crypto/constants/base.d.ts"
       ]
     }
   },
