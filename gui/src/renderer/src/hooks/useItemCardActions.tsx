@@ -1,5 +1,6 @@
 import { delay, generateUID, formatBytes } from '@akira-encryptor/core/utils'
 import { useEncryptedItems } from '@renderer/hooks/useEncryptedItems'
+import { FILE_EXTENSION } from '@akira-encryptor/core/constants/base'
 import { useNewOperation } from '@renderer/hooks/useNewOperation'
 import { Popconfirm, Tag, Tooltip } from 'antd'
 import * as Icons from '@ant-design/icons'
@@ -55,7 +56,7 @@ const useItemCardActions = ({ item }: Props) => {
     }
 
     const basePath = item.path.substring(0, lastSlash)
-    const fileName = item._id + (item.type === 'file' ? '.enc' : '')
+    const fileName = item._id + (item.type === 'file' ? FILE_EXTENSION : '')
     const srcPath = `${basePath}${fileName}`
 
     newDecrypt({
@@ -102,7 +103,7 @@ const useItemCardActions = ({ item }: Props) => {
                 ) +
                 '\\' +
                 item._id +
-                (item.type === 'file' ? '.enc' : '')
+                (item.type === 'file' ? FILE_EXTENSION : '')
 
               return (
                 <a
