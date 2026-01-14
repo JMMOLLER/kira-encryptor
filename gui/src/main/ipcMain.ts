@@ -205,6 +205,14 @@ export default function registerIpcMain() {
     }
   })
 
+  ipcMain.on('show-folder', (_event: IpcMainInvokeEvent, folderPath: string) => {
+    if (!fs.existsSync(folderPath) || !fs.statSync(folderPath).isDirectory()) {
+      console.error('Folder path is invalid:', folderPath)
+      return
+    }
+    shell.showItemInFolder(path.resolve(folderPath))
+  })
+
   ipcMain.on('reset-action', async (_event: IpcMainInvokeEvent, action: ResetActions) => {
     const userConfig = getUserConfig()
     switch (action) {

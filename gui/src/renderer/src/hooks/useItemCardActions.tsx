@@ -2,6 +2,7 @@ import { delay, generateUID, formatBytes } from '@akira-encryptor/core/utils'
 import { useEncryptedItems } from '@renderer/hooks/useEncryptedItems'
 import { FILE_EXTENSION } from '@akira-encryptor/core/constants/base'
 import { useNewOperation } from '@renderer/hooks/useNewOperation'
+import getSanitizedFilePath from '../utils/getSanitizedFilePath'
 import { Popconfirm, Tag, Tooltip } from 'antd'
 import * as Icons from '@ant-design/icons'
 import useApp from 'antd/es/app/useApp'
@@ -96,13 +97,7 @@ const useItemCardActions = ({ item }: Props) => {
           <li>
             <h3 className="text-base font-semibold text-gray-900">Ruta actual</h3>
             {(() => {
-              const basePath = item.path.substring(
-                0,
-                Math.max(item.path.lastIndexOf('/'), item.path.lastIndexOf('\\'))
-              )
-              const currentName = item._id + (item.type === 'file' ? FILE_EXTENSION : '')
-              const currentPath = `${basePath}\\${currentName}`
-              const hiddenPath = `${basePath}\\.${currentName}`
+              const { currentPath, hiddenPath } = getSanitizedFilePath(item)
 
               return (
                 <a

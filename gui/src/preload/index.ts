@@ -15,6 +15,7 @@ const api = {
   openDevTools: () => ipcRenderer.send('open-devtools'),
   existStorage: () => ipcRenderer.invoke('exist-storage'),
   openPath: (targetPath: string) => ipcRenderer.send('open-path', targetPath),
+  showFolder: (folderPath: string) => ipcRenderer.send('show-folder', folderPath),
   resetAction: (action: ResetActions) => ipcRenderer.send('reset-action', action),
   openExplorer: (props: OpenExplorerProps) => ipcRenderer.invoke('open-explorer', props),
   backupAction: (props: BackupActionProps) => ipcRenderer.invoke('backup-action', props),

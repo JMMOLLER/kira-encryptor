@@ -43,6 +43,7 @@ declare global {
     calculateUsageFromThreads: (threads: number) => number
     resetAction: (action: ResetActions) => Promise<void>
     calculateThreads: (usage: number) => number
+    showFolder: (folderPath: string) => void
     openPath: (targetPath: string) => void
     existStorage: () => Promise<boolean>
     openDevTools: () => void
