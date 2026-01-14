@@ -96,20 +96,19 @@ const useItemCardActions = ({ item }: Props) => {
           <li>
             <h3 className="text-base font-semibold text-gray-900">Ruta actual</h3>
             {(() => {
-              const currentPath =
-                item.path.substring(
-                  0,
-                  Math.max(item.path.lastIndexOf('/'), item.path.lastIndexOf('\\'))
-                ) +
-                '\\' +
-                item._id +
-                (item.type === 'file' ? FILE_EXTENSION : '')
+              const basePath = item.path.substring(
+                0,
+                Math.max(item.path.lastIndexOf('/'), item.path.lastIndexOf('\\'))
+              )
+              const currentName = item._id + (item.type === 'file' ? FILE_EXTENSION : '')
+              const currentPath = `${basePath}\\${currentName}`
+              const hiddenPath = `${basePath}\\.${currentName}`
 
               return (
                 <a
                   className="break-all hover:underline"
                   onClick={() => {
-                    window.api.openPath(currentPath)
+                    window.api.openPath(item.isHidden ? hiddenPath : currentPath)
                   }}
                   href="#"
                 >
