@@ -136,7 +136,7 @@ packages:
     resolution: {integrity: sha512-ukTPVhqG4jNzMro2qA9HSCSSVJN3aN7tlb+hfqYCt3ER0yWroeA2VR38MNrOHLQ/cVj+DaIMad0kFCtWWowh/A==}
 
   '@akira-encryptor/core@file:../core/akira-encryptor-core-0.6.0-beta.tgz':
-    resolution: {integrity: sha512-qOfCfLlVEXmEKT9anrpDqUE33Muc1ZmMGkwETV/lFo/bMqP1SdOGFIXdReZG3M7pPdc5oNmAai6+mar5hXuzuQ==, tarball: file:../core/akira-encryptor-core-0.6.0-beta.tgz}
+    resolution: {integrity: sha512-WMA+cZfHg8gTBnIxZEvpKwNUycXBkfm81XfQRp6RQ9M9QLiC4OqmcZJA0KdP3LI577YDro0nZJguMmaMxpVaMw==, tarball: file:../core/akira-encryptor-core-0.6.0-beta.tgz}
     version: 0.6.0-beta
     peerDependencies:
       typescript: ^5
