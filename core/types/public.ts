@@ -101,6 +101,11 @@ export interface BasicEncryptor {
   getStorage: () => Promise<Map<string, StorageItem>>;
   revealStoredItem: (item: string) => Promise<boolean>;
   hideStoredItem: (item: string) => Promise<boolean>;
+  /**
+   * @description `[ESP]` - Fuerza la recarga del almacenamiento desde el archivo de storage.
+   * @description `[ENG]` - Forces the storage to be reloaded from the storage file.
+   */
+  refreshStorage: () => Promise<void>;
 }
 
 export interface EncryptorProps {

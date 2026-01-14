@@ -105,6 +105,7 @@ class Encryptor {
         getStorage: instance.getStorage,
         revealStoredItem: instance.revealStoredItem.bind(instance),
         hideStoredItem: instance.hideStoredItem.bind(instance),
+        refreshStorage: async () => await Encryptor.STORAGE.loadFromFile(),
       };
     }
 
@@ -345,7 +346,7 @@ class Encryptor {
         messagePromise,
       ]);
 
-      const fileItem = (await this.onEncryptWriteStreamFinish({
+      const fileItem = await this.onEncryptWriteStreamFinish({
         isInternalFlow: !!isInternalFlow,
         extraProps: props.extraProps,
         tempPath: tempPath,
@@ -353,9 +354,9 @@ class Encryptor {
         fileStats,
         fileDir,
         filePath,
-      })) as Types.FileItem;
+      });
 
-      return Promise.resolve(fileItem);
+      return Promise.resolve(fileItem as Types.FileItem);
     } catch (err) {
       error = err as Error;
       return Promise.reject(err);
