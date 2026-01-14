@@ -1,5 +1,7 @@
 import { readFile, writeFile } from "fs/promises";
+import { existsSync, statSync } from "fs";
 import { glob } from "glob";
+import path from "path";
 
 async function fixImports() {
   // Search for all .cjs files in the dist/cjs directory
@@ -7,19 +9,52 @@ async function fixImports() {
   for (const file of files) {
     let content = await readFile(file, "utf8");
 
-    // Regex for require statements that do not end with .cjs
-    content = content.replace(
-      /import\s+[^'"]+['"](\.(?:\.[\/])?[^'"]+)['"]/g,
-      (match) => {
-        return match.replace(
-          /(['"])(\.(?:\.[\/])?[^'"]+)(['"])/,
-          (_m, q1, relPath, q2) => {
-            if (relPath.endsWith(".js")) {
-              return `${q1}${relPath}${q2}`;
+    const addJsExtension = (relPath: string) => {
+      if (!relPath.startsWith(".")) return relPath;
+      if (relPath.endsWith(".js")) return relPath;
+
+      const resolvedNoExt = path.resolve(path.dirname(file), relPath);
+
+      // Prefer an existing file match: ./foo -> ./foo.js
+      if (existsSync(`${resolvedNoExt}.js`)) {
+        return `${relPath}.js`;
+      }
+
+      // Handle directory imports: ./foo -> ./foo/index.js
+      if (existsSync(resolvedNoExt)) {
+        try {
+          if (statSync(resolvedNoExt).isDirectory()) {
+            const indexPath = path.join(resolvedNoExt, "index.js");
+            if (existsSync(indexPath)) {
+              const normalized = relPath.replace(/\\/g, "/");
+              return normalized.endsWith("/")
+                ? `${normalized}index.js`
+                : `${normalized}/index.js`;
             }
-            return `${q1}${relPath}.js${q2}`;
           }
-        );
+        } catch {
+          // fall through
+        }
+      }
+
+      return `${relPath}.js`;
+    };
+
+    // Patch static ESM imports/exports of relative paths: from "./x" -> from "./x.js" (or "./x/index.js")
+    content = content.replace(
+      /(\bimport\s+[^;\n]*?\sfrom\s|\bexport\s+[^;\n]*?\sfrom\s)(['"])(\.(?:\.[\/])?[^'"]+)(\2)/g,
+      (_match, prefix, quote, relPath) => {
+        const fixed = addJsExtension(relPath);
+        return `${prefix}${quote}${fixed}${quote}`;
+      }
+    );
+
+    // Patch side-effect imports: import "./x";
+    content = content.replace(
+      /(\bimport\s+)(['"])(\.(?:\.[\/])?[^'"]+)(\2)(\s*;)/g,
+      (_match, prefix, quote, relPath, _q2, semi) => {
+        const fixed = addJsExtension(relPath);
+        return `${prefix}${quote}${fixed}${quote}${semi}`;
       }
     );
 
