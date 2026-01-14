@@ -91,7 +91,7 @@ export default function registerIpcMain() {
       const onProgress = (progressData: string) => {
         mainWindow?.webContents.send('onProgress', progressData)
       }
-      const onEnd = async (endData: string) => {
+      const onEnd = (endData: string) => {
         mainWindow?.webContents.send('onOperationEnd', endData)
       }
       const onError = (errorData: unknown) => {
@@ -99,6 +99,9 @@ export default function registerIpcMain() {
         console.error(errorData)
       }
 
+      // This function runs the encryptor worker but no uses the basic ENCRYPTOR instance.
+      // Basic Encryptor instance is only used to manage the storage in the main process.
+      // For that reason, we create a new worker that creates its own Encryptor instance.
       runEncryptorWorker({
         ...props,
         password: PASSWORD,
@@ -147,6 +150,7 @@ export default function registerIpcMain() {
 
   ipcMain.handle('get-encrypted-content', async (_event: IpcMainInvokeEvent) => {
     try {
+      await ENCRYPTOR.refreshStorage()
       const content = await ENCRYPTOR.getStorage()
       return Array.from(content.entries())
     } catch (error) {
