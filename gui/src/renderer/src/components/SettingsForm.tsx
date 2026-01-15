@@ -114,6 +114,7 @@ function SettingsForm() {
     form.setFieldsValue({
       autoBackup: userConfig.autoBackup,
       compressionAlgorithm: userConfig.compressionAlgorithm,
+      showDecryptedItem: userConfig.showDecryptedItem,
       encoding: userConfig.encryptorConfig.encoding,
       compressionLvl: userConfig.compressionLvl,
       hideItemName: userConfig.hideItemName,
@@ -185,6 +186,16 @@ function SettingsForm() {
             <Switch checkedChildren="Activado" unCheckedChildren="Desactivado" />
           </Form.Item>
           <p>Permite ocultar el nombre de los elementos encriptados en la vista general.</p>
+        </div>
+
+        <div className="border-b border-black/10 p-1.5 [&>p]:text-gray-500 [&>p]:text-xs">
+          <Form.Item label="Mostrar elemento descifrado" className="mb-0!" name="showDecryptedItem">
+            <Switch checkedChildren="Activado" unCheckedChildren="Desactivado" />
+          </Form.Item>
+          <p>
+            Al terminar el proceso de descifrado, muestra el archivo o carpeta descifrada en el
+            explorador de archivos.
+          </p>
         </div>
 
         <div className="border-b border-black/10 p-1.5 [&>p]:text-gray-500 [&>p]:text-xs">

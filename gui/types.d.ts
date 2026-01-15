@@ -107,6 +107,7 @@ declare global {
   interface UserConfig {
     compressionAlgorithm: CompressionAlgorithm
     compressionLvl: CompressionLvl
+    showDecryptedItem: boolean
     hashedPassword?: string
     hideItemName: boolean
     autoBackup: boolean
@@ -126,6 +127,7 @@ declare global {
     error: string | null
     actionFor: CliType
     action: CliAction
+    srcPath?: string
     itemId: string
   }
 

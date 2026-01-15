@@ -92,6 +92,13 @@ export default function registerIpcMain() {
         mainWindow?.webContents.send('onProgress', progressData)
       }
       const onEnd = (endData: EncryptEndEvent) => {
+        const lastSlash =
+          Math.max(props.srcPath.lastIndexOf('/'), props.srcPath.lastIndexOf('\\')) + 1
+        if (lastSlash > 0) {
+          endData.srcPath = props.srcPath.substring(0, lastSlash)
+        } else {
+          console.error('Ruta de archivo no válida.')
+        }
         mainWindow?.webContents.send('onOperationEnd', endData)
       }
       const onError = (errorData: unknown) => {

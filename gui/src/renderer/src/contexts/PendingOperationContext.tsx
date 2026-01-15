@@ -1,5 +1,6 @@
 import { createContext, useState, ReactNode, useEffect, useCallback } from 'react'
 import { useEncryptedItems } from '@renderer/hooks/useEncryptedItems'
+import { useUserConfig } from '@renderer/hooks/useUserConfig'
 import useApp from 'antd/es/app/useApp'
 
 // Initialize the type for the context
@@ -9,6 +10,7 @@ const PendingOperationContext = createContext<PendingEncryptContextType | undefi
 export function PendingOperationProvider({ children }: { children: ReactNode }) {
   const [pendingItems, setPendingItems] = useState<PendingStorage>(new Map())
   const { setItems } = useEncryptedItems()
+  const { userConfig } = useUserConfig()
   const { notification } = useApp()
 
   const showEncryptionError = useCallback(
@@ -57,38 +59,45 @@ export function PendingOperationProvider({ children }: { children: ReactNode }) 
     [setItems]
   )
 
-  const onEncryptEndHandler = useCallback(
+  const onOperationEndHandler = useCallback(
     (_: unknown, data: EncryptEndEvent) => {
       const { error, itemId, actionFor, action } = data
       if (error) {
         showEncryptionError(actionFor, error)
-      } else if (!error && action === 'decrypt' && data.extraProps?.backupPath) {
-        window.api
-          .backupAction({
-            srcPath: data.extraProps.backupPath as string,
-            action: 'delete',
-            itemId
-          })
-          .then(({ error }) => {
-            if (!error) return
-            console.error('Error deleting backup after decryption:', error)
-            notification.error({
-              message: 'Error',
-              description: `Error al eliminar la copia de seguridad: ${error || 'Error desconocido'}.`,
-              placement: 'topRight',
-              duration: 5
+      } else if (!error && action === 'decrypt') {
+        if (userConfig.showDecryptedItem && data.srcPath) {
+          window.api.openPath(data.srcPath)
+        }
+        if (data.extraProps?.backupPath) {
+          window.api
+            .backupAction({
+              srcPath: data.extraProps.backupPath as string,
+              action: 'delete',
+              itemId
             })
-          })
+            .then(({ error }) => {
+              if (!error) return
+              console.error('Error deleting backup after decryption:', error)
+              notification.error({
+                message: 'Error',
+                description: `Error al eliminar la copia de seguridad: ${error || 'Error desconocido'}.`,
+                placement: 'topRight',
+                duration: 5
+              })
+            })
+        }
       }
 
       setPendingItems((prev) => {
-        return new Map(prev.entries().filter(([key]) => key !== itemId))
+        const next = new Map(prev)
+        next.delete(itemId)
+        return next
       })
 
       // force to update the encrypted items
       setItems(undefined)
     },
-    [showEncryptionError, setItems, notification]
+    [showEncryptionError, setItems, notification, userConfig.showDecryptedItem]
   )
 
   // Show error notifications for pending items
@@ -109,7 +118,7 @@ export function PendingOperationProvider({ children }: { children: ReactNode }) 
   useEffect(() => {
     const unsubscribe = window.electron.ipcRenderer.on('onProgress', onProgressHandler)
     const onErrorUnsubscribe = window.electron.ipcRenderer.on('onProgressError', onErrorHandler)
-    const onOperationEnd = window.electron.ipcRenderer.on('onOperationEnd', onEncryptEndHandler)
+    const onOperationEnd = window.electron.ipcRenderer.on('onOperationEnd', onOperationEndHandler)
 
     return () => {
       // Unregister the listeners
@@ -117,7 +126,7 @@ export function PendingOperationProvider({ children }: { children: ReactNode }) 
       onOperationEnd()
       onErrorUnsubscribe()
     }
-  }, [onEncryptEndHandler, onErrorHandler, onProgressHandler])
+  }, [onOperationEndHandler, onErrorHandler, onProgressHandler])
 
   const addItem = useCallback((id: string, item: PendingItem) => {
     setPendingItems((prev) => {

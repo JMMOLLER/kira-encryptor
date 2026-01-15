@@ -15,6 +15,7 @@ const CONF = new Conf<Partial<ConfStoreType>>({
       backupPath: ensureBackupFolder(),
       compressionAlgorithm: '-m0=lzma2',
       hashedPassword: undefined,
+      showDecryptedItem: false,
       compressionLvl: '-mx=5',
       hideItemName: false,
       encryptorConfig: {
@@ -51,6 +52,10 @@ const CONF = new Conf<Partial<ConfStoreType>>({
           backupPath: {
             type: 'string',
             default: ensureBackupFolder()
+          },
+          showDecryptedItem: {
+            type: 'boolean',
+            default: false
           },
           hideItemName: {
             type: 'boolean',
