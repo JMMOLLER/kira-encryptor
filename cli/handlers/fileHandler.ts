@@ -1,9 +1,9 @@
-import type { ProgressCallback } from "@akira-encryptor/core/types";
-import type { FileEncryptor } from "@akira-encryptor/core/types";
+import type { ProgressCallback } from "@kira-encryptor/core/types";
+import type { FileEncryptor } from "@kira-encryptor/core/types";
 
-import { CRYPTO_BASE } from "@akira-encryptor/core/constants";
-import * as utils from "@akira-encryptor/core/utils";
-import EncryptorClass from "@akira-encryptor/core";
+import { CRYPTO_BASE } from "@kira-encryptor/core/constants";
+import * as utils from "@kira-encryptor/core/utils";
+import EncryptorClass from "@kira-encryptor/core";
 import { workerPath } from "../const/workerPath";
 import { askForHideItem } from "../prompts";
 import cliProgress from "cli-progress";

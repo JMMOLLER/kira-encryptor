@@ -1,6 +1,6 @@
-import type * as EncryptorType from "@akira-encryptor/core/types";
-import * as utils from "@akira-encryptor/core/utils";
-import EncryptorClass from "@akira-encryptor/core";
+import type * as EncryptorType from "@kira-encryptor/core/types";
+import * as utils from "@kira-encryptor/core/utils";
+import EncryptorClass from "@kira-encryptor/core";
 import { workerPath } from "../const/workerPath";
 import { askForHideItem } from "../prompts";
 import cliProgress from "cli-progress";

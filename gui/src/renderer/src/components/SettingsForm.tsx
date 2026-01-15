@@ -18,7 +18,7 @@ type OmitedUserConfig = Omit<
 >
 interface CustomUserConf extends OmitedUserConfig {
   cpuUsage?: number
-  encoding?: AkiraBufferEncoding
+  encoding?: KiraBufferEncoding
 }
 
 function SettingsForm() {

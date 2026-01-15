@@ -1,5 +1,5 @@
 {
-  "name": "akira-encryptor",
+  "name": "kira-encryptor",
   "version": "0.4.0-beta",
   "private": true,
   "workspaces": [
@@ -11,7 +11,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/JMMOLLER/akira-encryptor"
+    "url": "https://github.com/JMMOLLER/kira-encryptor"
   },
   "scripts": {
     "bootstrap": "cd core && pnpm i && cd ../cli && pnpm i && cd ../gui && pnpm i",

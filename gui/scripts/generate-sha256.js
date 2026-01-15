@@ -8,7 +8,7 @@ const outputFile = join(distDir, 'sha256sum.txt')
 
 const { version } = JSON.parse(fs.readFileSync('./package.json', 'utf-8'))
 
-const files = [`akira-encryptor ${version}.exe`, `akira-encryptor-${version}-setup.exe`]
+const files = [`kira-encryptor ${version}.exe`, `kira-encryptor-${version}-setup.exe`]
 
 async function calculateSHA256(archivoRuta) {
   return new Promise((resolve, reject) => {

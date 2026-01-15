@@ -1,7 +1,7 @@
-import { CRYPTO_BASE } from "@akira-encryptor/core/constants";
-import type { FileItem, FolderItem } from "@akira-encryptor/core/types";
-import Encryptor, { FileSystem } from "@akira-encryptor/core";
-import * as utils from "@akira-encryptor/core/utils";
+import { CRYPTO_BASE } from "@kira-encryptor/core/constants";
+import type { FileItem, FolderItem } from "@kira-encryptor/core/types";
+import Encryptor, { FileSystem } from "@kira-encryptor/core";
+import * as utils from "@kira-encryptor/core/utils";
 import { workerPath } from "./const/workerPath";
 import sodium from "sodium-native";
 import prompts from "prompts";
@@ -44,7 +44,7 @@ export async function askForOtherOperation() {
 }
 
 // Note: If you enter an incorrect password, you will have to restart the program
-// IMPORTANT: `@akira-encryptor/core` wipes (memzero) the passphrase Buffer for safety.
+// IMPORTANT: `@kira-encryptor/core` wipes (memzero) the passphrase Buffer for safety.
 // So we must NOT cache the passphrase as a Buffer instance and reuse it.
 const credential: SecureCredential = {
   password: sodium.sodium_malloc(CRYPTO_BASE.SECRET_KEY_BYTES), // Placeholder for the password

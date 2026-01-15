@@ -1,6 +1,6 @@
-import { delay, generateUID, formatBytes } from '@akira-encryptor/core/utils'
+import { delay, generateUID, formatBytes } from '@kira-encryptor/core/utils'
 import { useEncryptedItems } from '@renderer/hooks/useEncryptedItems'
-import { FILE_EXTENSION } from '@akira-encryptor/core/constants/base'
+import { FILE_EXTENSION } from '@kira-encryptor/core/constants/base'
 import { useNewOperation } from '@renderer/hooks/useNewOperation'
 import getSanitizedFilePath from '../utils/getSanitizedFilePath'
 import { Popconfirm, Tag, Tooltip } from 'antd'

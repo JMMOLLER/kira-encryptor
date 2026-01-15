@@ -1,6 +1,6 @@
 import { SliderSingleProps } from 'antd'
 
-type EncodingOptions = { value: AkiraBufferEncoding; label: string }[]
+type EncodingOptions = { value: KiraBufferEncoding; label: string }[]
 
 const algorithmOptions = [
   { value: '-m0=copy', label: 'Ninguno' },

@@ -1,4 +1,4 @@
-import { FILE_EXTENSION } from '@akira-encryptor/core/constants/base'
+import { FILE_EXTENSION } from '@kira-encryptor/core/constants/base'
 
 export default function getSanitizedFilePath(item: StorageItem) {
   const basePath = item.path.substring(

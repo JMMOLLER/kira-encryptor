@@ -1,6 +1,6 @@
 import { createContext, useState, ReactNode, useEffect, useCallback } from 'react'
 import { useUserConfig } from '@renderer/hooks/useUserConfig'
-import { delay } from '@akira-encryptor/core/utils'
+import { delay } from '@kira-encryptor/core/utils'
 import useApp from 'antd/es/app/useApp'
 
 // Initialize the type for the context

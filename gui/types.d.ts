@@ -1,16 +1,16 @@
-import type * as AkiraTypes from '@akira-encryptor/core/types'
+import type * as KiraTypes from '@kira-encryptor/core/types'
 import type { ItemType } from 'antd/es/menu/interface'
 import { useAppProps } from 'antd/es/app/context'
 import type { OpenDialogOptions } from 'electron'
 import { SevenZipOptions } from 'node-7z'
 
 declare global {
-  type StorageItem = AkiraTypes.StorageItem
-  type FolderEncryptor = AkiraTypes.FolderEncryptor
-  type FolderDecryptor = AkiraTypes.FolderDecryptor
-  type FileEncryptor = AkiraTypes.FileEncryptor
-  type FileDecryptor = AkiraTypes.FileDecryptor
-  type AkiraBufferEncoding = AkiraTypes.BufferEncoding
+  type StorageItem = KiraTypes.StorageItem
+  type FolderEncryptor = KiraTypes.FolderEncryptor
+  type FolderDecryptor = KiraTypes.FolderDecryptor
+  type FileEncryptor = KiraTypes.FileEncryptor
+  type FileDecryptor = KiraTypes.FileDecryptor
+  type KiraBufferEncoding = KiraTypes.BufferEncoding
   type OpenExplorerProps = {
     title?: string
     properties: OpenDialogOptions['properties']
@@ -113,7 +113,7 @@ declare global {
     autoBackup: boolean
     backupPath: string
     coreReady: boolean
-    encryptorConfig: AkiraTypes.EncryptorOptions
+    encryptorConfig: KiraTypes.EncryptorOptions
   }
   interface UserConfigContext {
     userConfig: UserConfig & { isLoggedIn: boolean }
@@ -173,14 +173,14 @@ declare global {
      * so Node.js casts `Buffer` to `Uint8Array`.
      */
     password: Uint8Array
-    EncryptorConfig?: AkiraTypes.EncryptorOptions
+    EncryptorConfig?: KiraTypes.EncryptorOptions
   }
 
   type ResetActions = 'reset-storage' | 'reset-pwd' | 'reset-config'
 
   interface OperationProps {
     actionFor: EncryptFileProps['actionFor']
-    extraProps?: Record<string, AkiraTypes.JsonValue>
+    extraProps?: Record<string, KiraTypes.JsonValue>
     srcPath: string
     id: string
   }

@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: akira-encryptor
+productName: kira-encryptor
 directories:
   buildResources: build
 files:
@@ -16,7 +16,7 @@ win:
   target:
     - portable
     - nsis
-  executableName: akira-encryptor
+  executableName: kira-encryptor
 nsis:
   artifactName: ${productName}-${version}-setup.${ext}
   shortcutName: ${productName}

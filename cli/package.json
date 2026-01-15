@@ -1,5 +1,5 @@
 {
-  "name": "@akira-encryptor/cli",
+  "name": "@kira-encryptor/cli",
   "version": "0.6.0-beta",
   "author": "JMMOLLER",
   "module": "index.ts",
@@ -13,7 +13,7 @@
     "typecheck": "bun tsc --noEmit -p tsconfig.json",
     "build": "bun run clean && bun run build:workers && bun run build:main",
     "build:main": "esbuild ./index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/index.js --external:fswin --external:@napi-rs/nice-win32-x64-msvc --external:\"*.node\" --external:sodium-native",
-    "build:workers": "esbuild node_modules/piscina/dist/worker.js --bundle --platform=node --target=node18 --format=cjs --outfile=dist/worker.js --external:fswin --external:@napi-rs/nice-win32-x64-msvc --external:\"*.node\" --external:sodium-native && esbuild node_modules/@akira-encryptor/core/dist/esm/workers/encryptor.worker.js --bundle --platform=node --outdir=dist --target=node18 --format=cjs --external:sodium-native",
+    "build:workers": "esbuild node_modules/piscina/dist/worker.js --bundle --platform=node --target=node18 --format=cjs --outfile=dist/worker.js --external:fswin --external:@napi-rs/nice-win32-x64-msvc --external:\"*.node\" --external:sodium-native && esbuild node_modules/@kira-encryptor/core/dist/esm/workers/encryptor.worker.js --bundle --platform=node --outdir=dist --target=node18 --format=cjs --external:sodium-native",
     "build:win": "bun run build && bun run scripts/build/generate-windows-binary.js && bun run scripts/build/generate-sha256.js"
   },
   "devDependencies": {
@@ -28,7 +28,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@akira-encryptor/core": "file:..\\core\\akira-encryptor-core-0.6.0-beta.tgz",
+    "@kira-encryptor/core": "file:..\\core\\kira-encryptor-core-0.6.0-beta.tgz",
     "@yao-pkg/pkg": "^6.11.0",
     "cli-progress": "^3.12.0",
     "prompts": "^2.4.2",

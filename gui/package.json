@@ -1,7 +1,7 @@
 {
-  "name": "akira-encryptor-gui",
+  "name": "kira-encryptor-gui",
   "version": "0.5.0-beta",
-  "description": "A GUI for Akira Encryptor",
+  "description": "A GUI for Kira Encryptor",
   "main": "./out/main/index.mjs",
   "author": "JMMOLLER",
   "scripts": {
@@ -22,13 +22,13 @@
   },
   "dependencies": {
     "7zip-bin": "^5.2.0",
-    "@akira-encryptor/core": "file:..\\core\\akira-encryptor-core-0.6.0-beta.tgz",
     "@ant-design/icons": "^6.0.0",
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^4.0.0",
     "@iconify-json/fluent-color": "^1.2.12",
     "@iconify/react": "^6.0.0",
+    "@kira-encryptor/core": "file:..\\core\\kira-encryptor-core-0.6.0-beta.tgz",
     "@tailwindcss/vite": "^4.1.4",
     "antd": "^5.24.7",
     "bcryptjs": "^3.0.2",

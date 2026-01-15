@@ -1,6 +1,6 @@
 import { Button, FloatButton, Form, Input, InputProps, Modal, Space } from 'antd'
 import { usePendingOperation } from '@renderer/hooks/usePendingOperation'
-import { FILE_EXTENSION } from '@akira-encryptor/core/constants/base'
+import { FILE_EXTENSION } from '@kira-encryptor/core/constants/base'
 import { useNewOperation } from '@renderer/hooks/useNewOperation'
 import { useMenuItem } from '@renderer/hooks/useMenuItem'
 import { PlusOutlined } from '@ant-design/icons'

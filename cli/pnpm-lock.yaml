@@ -8,12 +8,12 @@ importers:
 
   .:
     dependencies:
-      '@akira-encryptor/core':
-        specifier: file:..\core\akira-encryptor-core-0.6.0-beta.tgz
-        version: file:../core/akira-encryptor-core-0.6.0-beta.tgz(bare-url@2.3.2)(typescript@5.9.3)
+      '@kira-encryptor/core':
+        specifier: file:..\core\kira-encryptor-core-0.6.0-beta.tgz
+        version: file:../core/kira-encryptor-core-0.6.0-beta.tgz(bare-url@2.3.2)(typescript@5.9.3)
       '@yao-pkg/pkg':
         specifier: ^6.11.0
-        version: 6.11.0
+        version: 6.12.0
       cli-progress:
         specifier: ^3.12.0
         version: 3.12.0
@@ -47,12 +47,6 @@ importers:
         version: 5.1.4
 
 packages:
-
-  '@akira-encryptor/core@file:../core/akira-encryptor-core-0.6.0-beta.tgz':
-    resolution: {integrity: sha512-qOfCfLlVEXmEKT9anrpDqUE33Muc1ZmMGkwETV/lFo/bMqP1SdOGFIXdReZG3M7pPdc5oNmAai6+mar5hXuzuQ==, tarball: file:../core/akira-encryptor-core-0.6.0-beta.tgz}
-    version: 0.6.0-beta
-    peerDependencies:
-      typescript: ^5
 
   '@babel/generator@7.28.6':
     resolution: {integrity: sha512-lOoVRwADj8hjf7al89tvQ2a1lf53Z+7tiXMgpZJL3maQPDxh0DgLMN62B2MKUOFcoodBHLMbDM6WAbKgNy5Suw==}
@@ -248,6 +242,12 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
+  '@kira-encryptor/core@file:../core/kira-encryptor-core-0.6.0-beta.tgz':
+    resolution: {integrity: sha512-MY3vLZIDGWjAtVP7PxFRzxo0TOozbKgIS/FXcc/JhzlsCufM6/3Yqu8b6qoizCxhohkEe77NKLy1j7Jj1yI5uw==, tarball: file:../core/kira-encryptor-core-0.6.0-beta.tgz}
+    version: 0.6.0-beta
+    peerDependencies:
+      typescript: ^5
+
   '@msgpack/msgpack@3.1.3':
     resolution: {integrity: sha512-47XIizs9XZXvuJgoaJUIE2lFoID8ugvc0jzSHP+Ptfk8nTbnR8g788wv48N03Kx0UkAv559HWRQ3yzOgzlRNUA==}
     engines: {node: '>= 18'}
@@ -370,8 +370,8 @@ packages:
   '@types/cli-progress@3.11.6':
     resolution: {integrity: sha512-cE3+jb9WRlu+uOSAugewNpITJDt1VF8dHOopPO4IABFc3SXYL5WE/+PTz/FCdZRRfIujiWW3n3aMbv1eIGVRWA==}
 
-  '@types/node@25.0.8':
-    resolution: {integrity: sha512-powIePYMmC3ibL0UJ2i2s0WIbq6cg6UyVFQxSCpaPxxzAaziRfimGivjdF943sSGV6RADVbk0Nvlm5P/FB44Zg==}
+  '@types/node@25.0.9':
+    resolution: {integrity: sha512-/rpCXHlCWeqClNBwUhDcusJxXYDjZTyE8v5oTO7WbL8eij2nKhUeU89/6xgjU7N4/Vh3He0BtyhJdQbDyhiXAw==}
 
   '@types/prompts@2.4.9':
     resolution: {integrity: sha512-qTxFi6Buiu8+50/+3DGIWLHM6QuWsEKugJnnP6iv2Mc4ncxE4A/OJkjuVOA+5X0X1S/nq5VJRa8Lu+nwcvbrKA==}
@@ -379,12 +379,12 @@ packages:
   '@types/sodium-native@2.3.9':
     resolution: {integrity: sha512-jZIg5ltGH1okmnH3FrLQsgwjcjOVozMSHwSiEm1/LpMekhOMHbQqp21P4H24mizh1BjwI6Q8qmphmD/HJuAqWg==}
 
-  '@yao-pkg/pkg-fetch@3.5.31':
-    resolution: {integrity: sha512-qBLFfCXJECsxMlvwamhdWR65LWI7Cnb40dmI+1NIr1Nfk8Ddc8luZIJsRRZER9UrY13X1NJZSRORsqIPYDsJbw==}
+  '@yao-pkg/pkg-fetch@3.5.32':
+    resolution: {integrity: sha512-hS8zzze5VVyVAciZoNX4q3ZmCdn0gi34P2SElk4PFbzkA4LPs7qBJ3LhUKb4d4KGw1HVkFJJOMgGomH7cMqQ5Q==}
     hasBin: true
 
-  '@yao-pkg/pkg@6.11.0':
-    resolution: {integrity: sha512-cofhWpH8ifhastwvbSe0Xnh1leq9oT0VmGbxa8fqH1hc4PtrO1dz6B3M5uQ4xTjOeGd9R9Gx8rT6bB2/ZERaTA==}
+  '@yao-pkg/pkg@6.12.0':
+    resolution: {integrity: sha512-yXdr5XTnEUm+AuBWPvMdv1z6dCcuKLUPYGZKPwb0pS8YE+P/Jspb47QjutcjfA31tIkGU6JTsOhlGxDxrO/A2w==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -992,8 +992,8 @@ packages:
   which-runtime@1.3.2:
     resolution: {integrity: sha512-5kwCfWml7+b2NO7KrLMhYihjRx0teKkd3yGp1Xk5Vaf2JGdSh+rgVhEALAD9c/59dP+YwJHXoEO7e8QPy7gOkw==}
 
-  which-typed-array@1.1.19:
-    resolution: {integrity: sha512-rEvr90Bck4WZt9HHFC4DJMsjvu7x+r6bImz0/BrbWb7A2djJ8hnZMrWnHo9F8ssv0OMErasDhftrfROTyqSDrw==}
+  which-typed-array@1.1.20:
+    resolution: {integrity: sha512-LYfpUkmqwl0h9A2HL09Mms427Q1RZWuOHsukfVcKRq9q95iQxdw0ix1JQrqbcDR9PH1QDwf5Qo8OZb5lksZ8Xg==}
     engines: {node: '>= 0.4'}
 
   winattr@3.0.0:
@@ -1031,24 +1031,6 @@ packages:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
 snapshots:
-
-  '@akira-encryptor/core@file:../core/akira-encryptor-core-0.6.0-beta.tgz(bare-url@2.3.2)(typescript@5.9.3)':
-    dependencies:
-      '@msgpack/msgpack': 3.1.3
-      '@seald-io/nedb': 4.1.2
-      chalk: 5.6.2
-      cli-spinners: 3.4.0
-      dotenv: 16.6.1
-      filesize-parser: 1.5.1
-      hidefile: 3.0.0
-      nanoid: 5.1.6
-      p-limit: 6.2.0
-      piscina: 5.1.4
-      sodium-native: 5.0.10(bare-url@2.3.2)
-      typescript: 5.9.3
-      zod: 3.25.76
-    transitivePeerDependencies:
-      - bare-url
 
   '@babel/generator@7.28.6':
     dependencies:
@@ -1167,6 +1149,24 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  '@kira-encryptor/core@file:../core/kira-encryptor-core-0.6.0-beta.tgz(bare-url@2.3.2)(typescript@5.9.3)':
+    dependencies:
+      '@msgpack/msgpack': 3.1.3
+      '@seald-io/nedb': 4.1.2
+      chalk: 5.6.2
+      cli-spinners: 3.4.0
+      dotenv: 16.6.1
+      filesize-parser: 1.5.1
+      hidefile: 3.0.0
+      nanoid: 5.1.6
+      p-limit: 6.2.0
+      piscina: 5.1.4
+      sodium-native: 5.0.10(bare-url@2.3.2)
+      typescript: 5.9.3
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - bare-url
+
   '@msgpack/msgpack@3.1.3': {}
 
   '@napi-rs/nice-android-arm-eabi@1.1.1':
@@ -1255,22 +1255,22 @@ snapshots:
 
   '@types/cli-progress@3.11.6':
     dependencies:
-      '@types/node': 25.0.8
+      '@types/node': 25.0.9
 
-  '@types/node@25.0.8':
+  '@types/node@25.0.9':
     dependencies:
       undici-types: 7.16.0
 
   '@types/prompts@2.4.9':
     dependencies:
-      '@types/node': 25.0.8
+      '@types/node': 25.0.9
       kleur: 3.0.3
 
   '@types/sodium-native@2.3.9':
     dependencies:
-      '@types/node': 25.0.8
+      '@types/node': 25.0.9
 
-  '@yao-pkg/pkg-fetch@3.5.31':
+  '@yao-pkg/pkg-fetch@3.5.32':
     dependencies:
       https-proxy-agent: 5.0.1
       node-fetch: 2.7.0
@@ -1286,12 +1286,12 @@ snapshots:
       - react-native-b4a
       - supports-color
 
-  '@yao-pkg/pkg@6.11.0':
+  '@yao-pkg/pkg@6.12.0':
     dependencies:
       '@babel/generator': 7.28.6
       '@babel/parser': 7.28.6
       '@babel/types': 7.28.6
-      '@yao-pkg/pkg-fetch': 3.5.31
+      '@yao-pkg/pkg-fetch': 3.5.32
       into-stream: 6.0.0
       minimist: 1.2.8
       multistream: 4.1.0
@@ -1397,7 +1397,7 @@ snapshots:
 
   bun-types@1.3.6:
     dependencies:
-      '@types/node': 25.0.8
+      '@types/node': 25.0.9
 
   call-bind-apply-helpers@1.0.2:
     dependencies:
@@ -1650,7 +1650,7 @@ snapshots:
 
   is-typed-array@1.1.15:
     dependencies:
-      which-typed-array: 1.1.19
+      which-typed-array: 1.1.20
 
   isarray@1.0.0: {}
 
@@ -1951,7 +1951,7 @@ snapshots:
       is-arguments: 1.2.0
       is-generator-function: 1.1.2
       is-typed-array: 1.1.15
-      which-typed-array: 1.1.19
+      which-typed-array: 1.1.20
 
   webidl-conversions@3.0.1: {}
 
@@ -1962,7 +1962,7 @@ snapshots:
 
   which-runtime@1.3.2: {}
 
-  which-typed-array@1.1.19:
+  which-typed-array@1.1.20:
     dependencies:
       available-typed-arrays: 1.0.7
       call-bind: 1.0.8

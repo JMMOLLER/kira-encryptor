@@ -1,7 +1,7 @@
-import { encryptorWorkerPath as workerPath } from '@akira-encryptor/core/workers'
-import type { ProgressCallback } from '@akira-encryptor/core/types'
+import { encryptorWorkerPath as workerPath } from '@kira-encryptor/core/workers'
+import type { ProgressCallback } from '@kira-encryptor/core/types'
 import { parentPort, workerData as wd } from 'worker_threads'
-import Encryptor from '@akira-encryptor/core'
+import Encryptor from '@kira-encryptor/core'
 
 type PayloadBase = Partial<FolderEncryptor> &
   Partial<FolderDecryptor> &
