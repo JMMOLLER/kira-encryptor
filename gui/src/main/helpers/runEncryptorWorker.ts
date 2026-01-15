@@ -4,7 +4,7 @@ type RunEncryptorWorkerParams = EncryptFileProps &
   WorkerEncryptProps & {
     onProgress: (data: string) => void
     onError: (data: unknown) => void
-    onEnd: (data: string) => void
+    onEnd: (data: EncryptEndEvent) => void
   }
 
 export default function runEncryptorWorker(props: RunEncryptorWorkerParams) {

@@ -91,7 +91,7 @@ export default function registerIpcMain() {
       const onProgress = (progressData: string) => {
         mainWindow?.webContents.send('onProgress', progressData)
       }
-      const onEnd = (endData: string) => {
+      const onEnd = (endData: EncryptEndEvent) => {
         mainWindow?.webContents.send('onOperationEnd', endData)
       }
       const onError = (errorData: unknown) => {
