@@ -26,7 +26,7 @@ function SkeletonCard(props: SkeletonCardProps) {
         </span>
       )}
       <Skeleton
-        className="w-[350px]! h-min! bg-white p-6 rounded-t-lg -mb-0.5!"
+        className="w-87.5! h-min! bg-white p-6 rounded-t-lg -mb-0.5!"
         paragraph={{ rows: 1 }}
         avatar
         active
