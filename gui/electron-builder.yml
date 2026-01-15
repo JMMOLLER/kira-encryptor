@@ -12,6 +12,12 @@ files:
 asarUnpack:
   - resources/**
   - node_modules/7zip-bin/**/7za.exe
+fileAssociations:
+  - ext: kira
+    role: Editor
+    name: KIRA Encryptor File
+    icon: build/kira-file.ico
+    description: File encrypted by KIRA Encryptor
 win:
   target:
     - portable
@@ -29,6 +35,12 @@ mac:
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
     - NSPublicFolderUsageDescription: Application requests access to the user's Public folder.
     - NSDesktopFolderUsageDescription: Application requests access to the user's Desktop folder.
+    - CFBundleDocumentTypes:
+      - CFBundleTypeName: KIRA Encryptor File
+        CFBundleTypeExtensions:
+          - kira
+        CFBundleTypeRole: Editor
+        CFBundleTypeIconFile: kira-file.icns
   notarize: false
 dmg:
   artifactName: ${productName}-${version}.${ext}
