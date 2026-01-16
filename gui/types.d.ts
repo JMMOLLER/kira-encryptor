@@ -38,6 +38,7 @@ declare global {
     openExplorer: (props: OpenExplorerProps) => Promise<string | null>
     backupAction: (props: BackupActionProps) => Promise<IpcResponseStatus & { dest: string }>
     getEncryptedContent: () => Promise<[string, StorageItem][] | Error>
+    deleteStorageItem: (itemId: string) => Promise<StorageItem | null>
     initEncryptor: (password: string) => Promise<IpcResponseStatus>
     encryptorAction: (props: EncryptFileProps) => Promise<void>
     calculateUsageFromThreads: (threads: number) => number

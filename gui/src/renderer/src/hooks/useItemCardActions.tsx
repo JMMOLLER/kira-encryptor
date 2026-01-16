@@ -3,7 +3,7 @@ import { useEncryptedItems } from '@renderer/hooks/useEncryptedItems'
 import { FILE_EXTENSION } from '@kira-encryptor/core/constants/base'
 import { useNewOperation } from '@renderer/hooks/useNewOperation'
 import getSanitizedFilePath from '../utils/getSanitizedFilePath'
-import { Popconfirm, Tag, Tooltip } from 'antd'
+import { Button, Popconfirm, Tag, Tooltip } from 'antd'
 import * as Icons from '@ant-design/icons'
 import useApp from 'antd/es/app/useApp'
 import { useDrawer } from './useDrawer'
@@ -13,10 +13,10 @@ interface Props {
 }
 
 const useItemCardActions = ({ item }: Props) => {
+  const { showDrawer, hideDrawer } = useDrawer()
   const { newDecrypt } = useNewOperation()
   const { setItems } = useEncryptedItems()
-  const { showDrawer } = useDrawer()
-  const { message } = useApp()
+  const { message, modal } = useApp()
 
   const toggleVisibility = async () => {
     const id = generateUID()
@@ -64,6 +64,18 @@ const useItemCardActions = ({ item }: Props) => {
       actionFor: item.type,
       id: item._id,
       srcPath
+    })
+  }
+
+  const deleteElement = async () => {
+    return await Promise.all([window.api.deleteStorageItem(item._id), delay(500)]).then(([res]) => {
+      if (res === null) {
+        message.error('Error al eliminar el elemento.')
+      } else {
+        message.success('Elemento eliminado con éxito.')
+        setItems(undefined)
+        hideDrawer()
+      }
     })
   }
 
@@ -146,6 +158,37 @@ const useItemCardActions = ({ item }: Props) => {
               </a>
             </li>
           )}
+
+          <Button
+            color="danger"
+            variant="solid"
+            className="w-full"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              modal.confirm({
+                title: 'Eliminar elemento',
+                content: (
+                  <>
+                    <p>
+                      ¿Estás seguro de que quieres eliminar este elemento? Esta acción no eliminará
+                      el archivo físico, solo su registro en la aplicación.
+                    </p>
+                    <small className="block mt-3! text-gray-500">
+                      Nota: Esta acción está pensada para eliminar registros obsoletos o
+                      incorrectos.
+                    </small>
+                  </>
+                ),
+                okButtonProps: { danger: true },
+                onOk: deleteElement,
+                okText: 'Eliminar',
+                centered: true
+              })
+            }}
+          >
+            Eliminar elemento
+          </Button>
         </ul>
       )
     })

@@ -743,7 +743,7 @@ packages:
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
   '@kira-encryptor/core@file:../core/kira-encryptor-core-0.6.0-beta.tgz':
-    resolution: {integrity: sha512-MY3vLZIDGWjAtVP7PxFRzxo0TOozbKgIS/FXcc/JhzlsCufM6/3Yqu8b6qoizCxhohkEe77NKLy1j7Jj1yI5uw==, tarball: file:../core/kira-encryptor-core-0.6.0-beta.tgz}
+    resolution: {integrity: sha512-gFauJV+eILlNwCumP9e7ClPT6pre48hxDQgEWtjoRDhzIkUuTMboAKr+4A/FhobjY+u71icITVKI2oWbHqZOfA==, tarball: file:../core/kira-encryptor-core-0.6.0-beta.tgz}
     version: 0.6.0-beta
     peerDependencies:
       typescript: ^5
@@ -3656,8 +3656,8 @@ packages:
     resolution: {integrity: sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==}
     engines: {node: '>=10'}
 
-  tar@7.5.2:
-    resolution: {integrity: sha512-7NyxrTE4Anh8km8iEy7o0QYPs+0JKBTj5ZaqHg6B39erLg0qYXN3BijtShwbsNSvQ+LN75+KV+C4QR/f6Gwnpg==}
+  tar@7.5.3:
+    resolution: {integrity: sha512-ENg5JUHUm2rDD7IvKNFGzyElLXNjachNLp6RaGf4+JOgxXHkqA+gq81ZAMCUmtMtqBsoU62lcp6S27g1LCYGGQ==}
     engines: {node: '>=18'}
 
   temp-file@3.4.0:
@@ -5729,7 +5729,7 @@ snapshots:
       minipass-pipeline: 1.2.4
       p-map: 7.0.4
       ssri: 12.0.0
-      tar: 7.5.2
+      tar: 7.5.3
       unique-filename: 4.0.0
 
   cacheable-lookup@5.0.4: {}
@@ -7263,7 +7263,7 @@ snapshots:
       nopt: 8.1.0
       proc-log: 5.0.0
       semver: 7.7.3
-      tar: 7.5.2
+      tar: 7.5.3
       tinyglobby: 0.2.15
       which: 5.0.0
     transitivePeerDependencies:
@@ -7980,7 +7980,7 @@ snapshots:
       mkdirp: 1.0.4
       yallist: 4.0.0
 
-  tar@7.5.2:
+  tar@7.5.3:
     dependencies:
       '@isaacs/fs-minipass': 4.0.1
       chownr: 3.0.0

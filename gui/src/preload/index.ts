@@ -19,6 +19,7 @@ const api = {
   resetAction: (action: ResetActions) => ipcRenderer.send('reset-action', action),
   openExplorer: (props: OpenExplorerProps) => ipcRenderer.invoke('open-explorer', props),
   backupAction: (props: BackupActionProps) => ipcRenderer.invoke('backup-action', props),
+  deleteStorageItem: (itemId: string) => ipcRenderer.invoke('delete-storage-item', itemId),
   initEncryptor: (password: string) => ipcRenderer.invoke('initialize-encryptor', password),
   encryptorAction: (props: EncryptFileProps) => ipcRenderer.invoke('encryptor-action', props),
   changeVisibility: (props: VisibilityActions) => ipcRenderer.invoke('visibility-action', props),

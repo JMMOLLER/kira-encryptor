@@ -54,6 +54,15 @@ export default function registerIpcMain() {
     }
   })
 
+  ipcMain.handle('delete-storage-item', async (_event: IpcMainInvokeEvent, itemId: string) => {
+    try {
+      await ENCRYPTOR.refreshStorage()
+      return await ENCRYPTOR.deleteStoredItem(itemId)
+    } catch (error) {
+      return error as Error
+    }
+  })
+
   ipcMain.handle('backup-action', async (_event, props: BackupActionProps) => {
     const src = String(props.srcPath)
     const { itemId, action } = props
