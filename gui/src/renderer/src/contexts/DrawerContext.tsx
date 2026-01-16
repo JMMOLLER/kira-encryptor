@@ -24,7 +24,7 @@ export const DrawerProvider = ({ children }: { children: ReactNode }) => {
   return (
     <DrawerContext.Provider value={{ showDrawer, hideDrawer }}>
       {children}
-      <Drawer title={title} onClose={hideDrawer} open={open} closable>
+      <Drawer title={title} onClose={hideDrawer} open={open} closable destroyOnHidden>
         {content}
       </Drawer>
     </DrawerContext.Provider>

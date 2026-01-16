@@ -12,7 +12,7 @@ function App() {
   }
 
   return (
-    <Layout className="!min-h-screen" onContextMenu={handleContextMenu}>
+    <Layout className="min-h-screen!" onContextMenu={handleContextMenu}>
       <Aside />
       <MainContent />
     </Layout>
