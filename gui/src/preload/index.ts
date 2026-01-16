@@ -22,7 +22,7 @@ const api = {
   initEncryptor: (password: string) => ipcRenderer.invoke('initialize-encryptor', password),
   encryptorAction: (props: EncryptFileProps) => ipcRenderer.invoke('encryptor-action', props),
   changeVisibility: (props: VisibilityActions) => ipcRenderer.invoke('visibility-action', props),
-  getEncryptedContent: (password: string) => ipcRenderer.invoke('get-encrypted-content', password)
+  getEncryptedContent: (password: string) => ipcRenderer.invoke('get-storage-content', password)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

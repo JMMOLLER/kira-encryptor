@@ -155,7 +155,7 @@ export default function registerIpcMain() {
     }
   })
 
-  ipcMain.handle('get-encrypted-content', async (_event: IpcMainInvokeEvent) => {
+  ipcMain.handle('get-storage-content', async (_event: IpcMainInvokeEvent) => {
     try {
       await ENCRYPTOR.refreshStorage()
       const content = await ENCRYPTOR.getStorage()
