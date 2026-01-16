@@ -98,14 +98,38 @@ export interface EncryptorOptions {
 export type BufferEncoding = "base64" | "base64url" | "hex" | "latin1";
 
 export interface BasicEncryptor {
+  /**
+   * @description `[ESP]` - Obtiene el contenido completo del almacenamiento como un `Map`.
+   * @description `[ENG]` - Gets the entire storage content as a `Map`.
+   * @returns Map with the stored items.
+   */
   getStorage: () => Promise<Map<string, StorageItem>>;
+  /**
+   * @description `[ESP]` - Hace que un elemento almacenado cambie su estado a visible.
+   * @description `[ENG]` - Makes a stored item change its state to visible.
+   * @param item - ID of the item to reveal
+   * @returns Indicates whether the operation was successful
+   */
   revealStoredItem: (item: string) => Promise<boolean>;
+  /**
+   * @description `[ESP]` - Hace que un elemento almacenado cambie su estado a oculto.
+   * @description `[ENG]` - Makes a stored item change its state to hidden.
+   * @param item - ID of the item to hide
+   * @returns Indicates whether the operation was successful
+   */
   hideStoredItem: (item: string) => Promise<boolean>;
   /**
    * @description `[ESP]` - Fuerza la recarga del almacenamiento desde el archivo de storage.
    * @description `[ENG]` - Forces the storage to be reloaded from the storage file.
    */
   refreshStorage: () => Promise<void>;
+  /**
+   * @description `[ESP]` - Elimina un elemento del almacenamiento.
+   * @description `[ENG]` - Deletes an item from the storage.
+   * @param itemId - ID of the item to delete
+   * @returns Indicates whether the operation was successful
+   */
+  deleteStoredItem: (itemId: string) => Promise<StorageItem | null>;
 }
 
 export interface EncryptorProps {

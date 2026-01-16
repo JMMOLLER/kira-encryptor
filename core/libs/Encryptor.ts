@@ -71,17 +71,17 @@ class Encryptor {
   static async init(
     password: Buffer,
     workerPath: string,
-    options?: Types.EncryptorOptions
+    options?: Types.EncryptorOptions,
   ): Promise<Encryptor>;
   static async init(
     password: Buffer,
     workerPath?: undefined,
-    options?: Types.EncryptorOptions
+    options?: Types.EncryptorOptions,
   ): Promise<Types.BasicEncryptor>;
   static async init(
     password: Buffer,
     workerPath?: string,
-    options?: Types.EncryptorOptions
+    options?: Types.EncryptorOptions,
   ): Promise<Encryptor | Types.BasicEncryptor> {
     Encryptor.STORAGE = new Storage(options?.dbPath);
     await Encryptor.STORAGE.ready;
@@ -102,10 +102,11 @@ class Encryptor {
 
     if (!workerPath) {
       return {
-        getStorage: instance.getStorage,
+        getStorage: instance.getStorage.bind(instance),
         revealStoredItem: instance.revealStoredItem.bind(instance),
         hideStoredItem: instance.hideStoredItem.bind(instance),
-        refreshStorage: async () => await Encryptor.STORAGE.loadFromFile(),
+        refreshStorage: Encryptor.STORAGE.loadFromFile.bind(Encryptor.STORAGE),
+        deleteStoredItem: Encryptor.STORAGE.delete.bind(Encryptor.STORAGE),
       };
     }
 
@@ -229,7 +230,7 @@ class Encryptor {
       const stats = Encryptor.FS.getStatFile(props.filePath);
       if (!stats.isFile()) {
         return Promise.reject(
-          new Error("La ruta proporcionada no es un archivo válido.")
+          new Error("La ruta proporcionada no es un archivo válido."),
         );
       }
 
@@ -251,8 +252,8 @@ class Encryptor {
     if (magic.equals(FILE_MAGIC)) {
       const error = new Error(
         `Cannot re-encrypt file '${path.basename(
-          filePath
-        )}' because it is already encrypted.`
+          filePath,
+        )}' because it is already encrypted.`,
       );
       error.name = "FileAlreadyEncrypted";
       return Promise.reject(error);
@@ -262,7 +263,7 @@ class Encryptor {
     ) {
       // skip logs file
       return Promise.reject(
-        "El archivo no puede ser cifrado porque es un archivo de registro."
+        "El archivo no puede ser cifrado porque es un archivo de registro.",
       );
     }
 
@@ -275,7 +276,7 @@ class Encryptor {
     const fileBaseName = path.basename(filePath, path.extname(filePath));
     const tempPath = path.join(
       Encryptor.tempDir,
-      `${fileBaseName}-${utils.generateUID()}${FILE_EXTENSION}.tmp`
+      `${fileBaseName}-${utils.generateUID()}${FILE_EXTENSION}.tmp`,
     );
 
     const channel = new MessageChannel();
@@ -341,7 +342,7 @@ class Encryptor {
           },
           {
             transferList: [channel.port1] as StructuredSerializeOptions,
-          }
+          },
         ),
         messagePromise,
       ]);
@@ -387,7 +388,7 @@ class Encryptor {
       const stats = Encryptor.FS.getStatFile(props.filePath);
       if (!stats.isFile()) {
         return Promise.reject(
-          new Error("La ruta proporcionada no es un archivo válido.")
+          new Error("La ruta proporcionada no es un archivo válido."),
         );
       }
 
@@ -419,7 +420,7 @@ class Encryptor {
       Encryptor.tempDir,
       path
         .basename(filePath)
-        .replace(FILE_EXTENSION, `${FILE_EXTENSION}.dec.tmp`)
+        .replace(FILE_EXTENSION, `${FILE_EXTENSION}.dec.tmp`),
     );
 
     const channel = new MessageChannel();
@@ -476,7 +477,7 @@ class Encryptor {
           },
           {
             transferList: [channel.port1] as StructuredSerializeOptions,
-          }
+          },
         ),
         messagePromise,
       ]);
@@ -521,7 +522,7 @@ class Encryptor {
       const stats = Encryptor.FS.getStatFile(props.folderPath);
       if (stats.isFile()) {
         return Promise.reject(
-          new Error("La ruta proporcionada no es un archivo válido.")
+          new Error("La ruta proporcionada no es un archivo válido."),
         );
       }
 
@@ -544,7 +545,7 @@ class Encryptor {
     // If a folder containing an encrypted file exists, then the entire operation will be canceled.
     if (!isInternalFlow && (await Encryptor.STORAGE.get(baseName))) {
       const error = new Error(
-        `Cannot re-encrypt folder with name '${baseName}' because it is already exists in storage.`
+        `Cannot re-encrypt folder with name '${baseName}' because it is already exists in storage.`,
       );
       error.name = "FolderAlreadyEncrypted";
       return Promise.reject(error);
@@ -580,7 +581,7 @@ class Encryptor {
     // 3. Create a p-limit instance to restrict concurrency
     const minTasks = Math.min(this.MAX_THREADS, entries.length);
     const limit = pLimit(
-      Math.max(1, minTasks) // Ensure at least 1 thread
+      Math.max(1, minTasks), // Ensure at least 1 thread
     );
 
     // --------------------
@@ -611,7 +612,7 @@ class Encryptor {
     // PHASE B: Process files in this folder
     // --------------------
     const subfolders: Types.FolderItem[] = subfolderResults.filter(
-      (item): item is Types.FolderItem => item !== null
+      (item): item is Types.FolderItem => item !== null,
     );
 
     // ------------- FASE B: Procesar ARCHIVOS -------------
@@ -651,7 +652,7 @@ class Encryptor {
     // Wait for ALL file tasks to finish (or abort on first error)
     const fileResults = await Promise.all(filePromises);
     const files: Types.FileItem[] = fileResults.filter(
-      (item): item is Types.FileItem => item !== null
+      (item): item is Types.FileItem => item !== null,
     );
 
     // --------------------
@@ -668,7 +669,7 @@ class Encryptor {
     const encryptedName = encryptText(
       baseName,
       this.SECRET_KEY as Buffer,
-      this.ENCODING
+      this.ENCODING,
     );
     let saved: Types.StorageItem = {
       originalName: baseName,
@@ -686,7 +687,7 @@ class Encryptor {
       this.stepDelay = this.DEFAULT_STEP_DELAY;
       if (!this.SILENT) {
         this.saveStep = utils.createSpinner(
-          "Registrando carpeta encriptada..."
+          "Registrando carpeta encriptada...",
         );
       }
       if (this.ALLOW_EXTRA_PROPS && props.extraProps) {
@@ -694,7 +695,7 @@ class Encryptor {
       } else if (props.extraProps && !this.ALLOW_EXTRA_PROPS) {
         utils
           .createSpinner(
-            "Propiedades extra no permitidas. Configura 'allowExtraProps' a true."
+            "Propiedades extra no permitidas. Configura 'allowExtraProps' a true.",
           )
           .warn();
       }
@@ -721,7 +722,7 @@ class Encryptor {
     if (!isInternalFlow) {
       const mvStep = !this.SILENT
         ? utils.createSpinner(
-            `Remplazando carpeta original por la encriptada...`
+            `Remplazando carpeta original por la encriptada...`,
           )
         : undefined;
       try {
@@ -755,7 +756,7 @@ class Encryptor {
       const stats = Encryptor.FS.getStatFile(props.folderPath);
       if (stats.isFile()) {
         return Promise.reject(
-          new Error("La ruta proporcionada no es un archivo válido.")
+          new Error("La ruta proporcionada no es un archivo válido."),
         );
       }
 
@@ -792,7 +793,7 @@ class Encryptor {
     // Create p-limit instance with max threads = min(MAX_THREADS, number of items)
     const minTasks = Math.min(this.MAX_THREADS, contentItems.length);
     const limit = pLimit(
-      Math.max(1, minTasks) // Ensure at least 1 thread
+      Math.max(1, minTasks), // Ensure at least 1 thread
     );
 
     // --------------------
@@ -827,7 +828,7 @@ class Encryptor {
       if (item.type === "file") {
         const encryptedFilePath = path.join(
           folderPath,
-          item._id + FILE_EXTENSION
+          item._id + FILE_EXTENSION,
         );
         const task = limit(async () => {
           try {
@@ -856,7 +857,7 @@ class Encryptor {
     const originalName = decryptText(
       currentFolder.encryptedName,
       this.SECRET_KEY as Buffer,
-      this.ENCODING
+      this.ENCODING,
     );
 
     if (!originalName) {
@@ -875,7 +876,7 @@ class Encryptor {
       if (!isInternalFlow) {
         if (!this.SILENT) {
           this.removeStep = utils.createSpinner(
-            "Eliminando carpeta encriptada..."
+            "Eliminando carpeta encriptada...",
           );
         }
         // Rename folder in file system
@@ -905,7 +906,7 @@ class Encryptor {
 
   /* ========================== STREAM HANDLERS ========================== */
   private async onEncryptWriteStreamFinish(
-    props: Types.EncryptWriteStreamFinish
+    props: Types.EncryptWriteStreamFinish,
   ): Promise<Types.StorageItem> {
     const { filePath, tempPath, fileDir, fileStats, fileBaseName } = props;
     let savedItem: Types.FileItem | undefined = undefined;
@@ -924,7 +925,7 @@ class Encryptor {
       const encryptedName = encryptText(
         fileBaseName,
         this.SECRET_KEY as Buffer,
-        this.ENCODING
+        this.ENCODING,
       );
       savedItem = {
         encryptedName,
@@ -938,7 +939,7 @@ class Encryptor {
       if (!props.isInternalFlow) {
         if (!this.SILENT) {
           this.saveStep = utils.createSpinner(
-            "Registrando archivo encriptado..."
+            "Registrando archivo encriptado...",
           );
         }
         if (this.ALLOW_EXTRA_PROPS && props.extraProps) {
@@ -946,7 +947,7 @@ class Encryptor {
         } else if (props.extraProps && !this.ALLOW_EXTRA_PROPS) {
           utils
             .createSpinner(
-              "Propiedades extra no permitidas. Configura 'allowExtraProps' a true."
+              "Propiedades extra no permitidas. Configura 'allowExtraProps' a true.",
             )
             .warn();
         }
@@ -955,7 +956,7 @@ class Encryptor {
           utils.delay(this.stepDelay),
         ]).then(([storageItem]) => {
           this.saveStep?.succeed(
-            "Archivo encriptado registrado correctamente."
+            "Archivo encriptado registrado correctamente.",
           );
           savedItem = storageItem;
         });
@@ -967,7 +968,7 @@ class Encryptor {
       // Rename the temp file to the final file name
       if (!props.isInternalFlow && !this.SILENT) {
         this.renameStep = utils.createSpinner(
-          "Renombrando archivo encriptado..."
+          "Renombrando archivo encriptado...",
         );
       }
       await Promise.all([
@@ -975,7 +976,7 @@ class Encryptor {
         utils.delay(this.stepDelay),
       ]).then(() => {
         this.renameStep?.succeed(
-          "Archivo encriptado renombrado correctamente."
+          "Archivo encriptado renombrado correctamente.",
         );
       });
 
@@ -1021,7 +1022,7 @@ class Encryptor {
   }
 
   private async onDecryptWriteStreamFinish(
-    params: Types.DecryptWriteStreamFinish
+    params: Types.DecryptWriteStreamFinish,
   ) {
     const { folderPath, isInternalFlow, tempPath, fileItem, outPath } = params;
     let error: Error | undefined = undefined;
@@ -1046,7 +1047,7 @@ class Encryptor {
 
       const restoredPath = (outPath ? outPath : folderPath).replace(
         path.basename(outPath ? outPath : folderPath),
-        originalFileName
+        originalFileName,
       );
       const tempFileSize = Encryptor.FS.getStatFile(tempPath).size;
       let inputBuffer: NonSharedBuffer | string = tempPath;
@@ -1057,7 +1058,7 @@ class Encryptor {
 
       if (!isInternalFlow && !this.SILENT) {
         this.renameStep = utils.createSpinner(
-          "Remplazando archivo original..."
+          "Remplazando archivo original...",
         );
       }
       await Promise.all([
@@ -1070,7 +1071,7 @@ class Encryptor {
       if (!outPath) {
         if (!isInternalFlow && !this.SILENT) {
           this.removeStep = utils.createSpinner(
-            "Eliminando archivo temporal..."
+            "Eliminando archivo temporal...",
           );
         }
         await Promise.all([
@@ -1084,7 +1085,7 @@ class Encryptor {
       if (!isInternalFlow) {
         if (!this.SILENT) {
           this.saveStep = utils.createSpinner(
-            "Eliminando archivo del registro..."
+            "Eliminando archivo del registro...",
           );
         }
         await Promise.all([
