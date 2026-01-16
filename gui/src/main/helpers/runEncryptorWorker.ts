@@ -29,7 +29,7 @@ export default function runEncryptorWorker(props: RunEncryptorWorkerParams) {
           break
       }
     })
-    .on('error', (err) => {
+    .on('error', (err: Error) => {
       console.error('Encryptor worker error:', err)
       onError({
         message: err.message,
