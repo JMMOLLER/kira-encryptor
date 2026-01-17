@@ -1,6 +1,6 @@
-# Akira-encryptor
+# Kira-encryptor
 
-**Akira-encryptor** es una herramienta modular desarrollada en TypeScript/Node.js, diseñada para el cifrado y descifrado de archivos y carpetas, con soporte para CLI y GUI sobre un núcleo común robusto (`core`). Utiliza `sodium-native` para garantizar un alto nivel de seguridad criptográfica. El proyecto está enfocado en la eficiencia, soportando archivos grandes mediante flujos (`streams`) y permitiendo seguimiento de progreso a nivel global.
+**kira-encryptor** es una herramienta modular desarrollada en TypeScript/Node.js, diseñada para el cifrado y descifrado de archivos y carpetas, con soporte para CLI y GUI sobre un núcleo común robusto (`core`). Utiliza `sodium-native` para garantizar un alto nivel de seguridad criptográfica. El proyecto está enfocado en la eficiencia, soportando archivos grandes mediante flujos (`streams`) y permitiendo seguimiento de progreso a nivel global.
 
 > 🚧 El proyecto se encuentra actualmente **en fase beta**.
 
@@ -46,8 +46,8 @@ PASSWORD=<your_password> #Contraseña para cifrado/descifrado [opcional]
 1. Clona el repositorio:
 
 ```bash
-git clone https://github.com/JMMOLLER/akira-encryptor.git
-cd Akira-encryptor
+git clone https://github.com/JMMOLLER/kira-encryptor.git
+cd kira-encryptor
 ```
 
 2. Instala las dependencias con:
@@ -92,8 +92,8 @@ pnpm start
 1. Clona el repositorio:
 
 ```bash
-git clone https://github.com/JMMOLLER/akira-encryptor.git
-cd Akira-encryptor
+git clone https://github.com/JMMOLLER/kira-encryptor.git
+cd kira-encryptor
 ```
 
 2. Instala las dependencias con:

@@ -1,6 +1,6 @@
-# @akira-encryptor/core
+# @kira-encryptor/core
 
-Biblioteca que concentra la lógica criptográfica y de orquestación de Akira Encryptor. Expone helpers para derivar claves seguras, operar sobre el sistema de archivos mediante `worker_threads` y llevar un inventario cifrado de los artefactos procesados.
+Biblioteca que concentra la lógica criptográfica y de orquestación de Kira Encryptor. Expone helpers para derivar claves seguras, operar sobre el sistema de archivos mediante `worker_threads` y llevar un inventario cifrado de los artefactos procesados.
 
 ## Características clave
 - **Clave maestra aislada**: se deriva una `SECRET_KEY` desde la contraseña del usuario y se comparte con los workers mediante `SharedArrayBuffer` para evitar copias intermedias en memoria.
@@ -11,9 +11,9 @@ Biblioteca que concentra la lógica criptográfica y de orquestación de Akira E
 
 ## Instalación
 ```bash
-pnpm add @akira-encryptor/core
+pnpm add @kira-encryptor/core
 # o
-npm install @akira-encryptor/core
+npm install @kira-encryptor/core
 ```
 
 ### Dependencias nativas
@@ -23,7 +23,7 @@ npm install @akira-encryptor/core
 ## Primeros pasos
 ```ts
 import { encryptorWorkerPath } from "./workers/index";
-import Encryptor from "@akira-encryptor/core";
+import Encryptor from "@kira-encryptor/core";
 import path from "node:path";
 
 const password = Buffer.from(process.env.PASSWORD!, "utf8");
