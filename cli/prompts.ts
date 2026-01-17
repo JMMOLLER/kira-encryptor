@@ -168,7 +168,7 @@ export async function askUserActions() {
   }
 
   if (!credential.ready) {
-    const storeExists = FileSystem.getInstance().itemExists("./library.json");
+    const storeExists = FileSystem.getInstance().itemExists("./storage.bin");
     const { password: pwd } = (await prompts([
       {
         type: "password",
