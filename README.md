@@ -1,6 +1,6 @@
 # Akira-encryptor
 
-**Akira-encryptor** es una herramienta modular desarrollada en TypeScript/Node.js, diseñada para el cifrado y descifrado de archivos y carpetas, con soporte para CLI y GUI sobre un núcleo común robusto (`core`). Utiliza `libsodium-wrappers` para garantizar un alto nivel de seguridad criptográfica. El proyecto está enfocado en la eficiencia, soportando archivos grandes mediante flujos (`streams`) y permitiendo seguimiento de progreso a nivel global.
+**Akira-encryptor** es una herramienta modular desarrollada en TypeScript/Node.js, diseñada para el cifrado y descifrado de archivos y carpetas, con soporte para CLI y GUI sobre un núcleo común robusto (`core`). Utiliza `sodium-native` para garantizar un alto nivel de seguridad criptográfica. El proyecto está enfocado en la eficiencia, soportando archivos grandes mediante flujos (`streams`) y permitiendo seguimiento de progreso a nivel global.
 
 > 🚧 El proyecto se encuentra actualmente **en fase beta**.
 
@@ -14,7 +14,7 @@
 
 ## ✨ Características
 
-- 🔐 **Cifrado/Descifrado de archivos** usando `libsodium-wrappers`.
+- 🔐 **Cifrado/Descifrado de archivos** usando `sodium-native`.
 - 📂 **Soporte para carpetas** (procesamiento recursivo de subdirectorios).
 - 📦 **Manejo eficiente de archivos grandes** mediante streaming.
 - 📊 **Visualización de progreso** en tiempo real (barra de progreso global).
@@ -75,7 +75,7 @@ pnpm start
 - Encriptado/Desencriptado de archivos individuales.
 - Procesamiento recursivo de carpetas.
 - Barra de progreso global.
-- Cifrado seguro con `libsodium`.
+- Cifrado seguro con `sodium-native`.
 - Multihilo con `piscina`.
 - Soporte para flujos de datos (stream) → eficiencia con archivos grandes.
 - Ocultar archivos o carpetas a nivel de SO.
@@ -113,7 +113,7 @@ pnpm start
 - Encriptado/Desencriptado de archivos individuales.
 - Procesamiento recursivo de carpetas.
 - Barra de progreso global.
-- Cifrado seguro con `libsodium`.
+- Cifrado seguro con `sodium-native`.
 - Multihilo con `piscina` facilmente configurable.
 - Soporte para flujos de datos (stream) → eficiencia con archivos grandes.
 - Ocultar archivos o carpetas a nivel de SO.
