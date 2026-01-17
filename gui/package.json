@@ -1,6 +1,6 @@
 {
   "name": "kira-encryptor-gui",
-  "version": "0.5.0-beta",
+  "version": "0.6.0-beta",
   "description": "A GUI for Kira Encryptor",
   "main": "./out/main/index.mjs",
   "author": "JMMOLLER",
