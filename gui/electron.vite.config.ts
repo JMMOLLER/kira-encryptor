@@ -1,12 +1,11 @@
-import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import { defineConfig } from 'electron-vite'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
     resolve: {
       alias: {
         '@workers': resolve('src/workers'),
@@ -22,15 +21,18 @@ export default defineConfig({
         output: {
           format: 'es'
         }
-      }
+      },
+      externalizeDeps: true
     }
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
     resolve: {
       alias: {
         '@utils': resolve('src/utils')
       }
+    },
+    build: {
+      externalizeDeps: true
     }
   },
   renderer: {
