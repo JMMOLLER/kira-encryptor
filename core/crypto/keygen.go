@@ -5,8 +5,8 @@ import (
 
 	"golang.org/x/crypto/argon2"
 
-	"github.com/awnumar/memguard"
 	"github.com/JMMOLLER/kira-encryptor/core/types"
+	"github.com/awnumar/memguard"
 )
 
 type Result struct {
@@ -14,7 +14,7 @@ type Result struct {
 	KeyVerifier []byte
 }
 
-func GenerateKey(password *memguard.LockedBuffer, header types.StorageHeader) (*Result, error) {
+func GenerateKey(password *memguard.LockedBuffer, header types.VaultHeader) (*Result, error) {
 	defer password.Destroy() // Ensure the password buffer is wiped after use
 
 	// Validate Salt

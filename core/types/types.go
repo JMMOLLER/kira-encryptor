@@ -17,6 +17,12 @@ const (
 	WorkerTaskDecrypt WorkerTaskType = "decrypt"
 )
 
+type KdfType string
+
+const (
+	HKDF_Sha256 KdfType = "hkdf-sha256"
+)
+
 // Expresses the progress of an encryption or decryption operation.
 type ProgressCallback func(processedBytes, totalBytes int64)
 
@@ -30,10 +36,15 @@ type EncryptorOptions struct {
 }
 
 // Defines the header info stored in the encrypted file.
-type StorageHeader struct {
-	Kdf      string
-	Memlimit uint32
-	Opslimit uint32
+type EncryptedHeader struct {
+	Kdf      KdfType `json:"kdf"`
 	Salt     []byte `json:"salt"`
+}
+
+type VaultHeader struct {
+	Kdf      KdfType `json:"kdf"`
+	Salt     []byte `json:"salt"`
+	Opslimit uint32 `json:"opslimit"`
+	Memlimit uint32 `json:"memlimit"`
 	Verifier []byte `json:"verifier"`
 }

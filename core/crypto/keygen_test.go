@@ -12,11 +12,11 @@ func TestGenerateKey(t *testing.T) {
 	defer memguard.Purge() // Ensure all locked buffers are wiped after the test
 
 	// 2. Define a fixed password and header for testing
-	header := types.StorageHeader{
-		Kdf:      "argon2id",
+	header := types.VaultHeader{
+		Kdf:      types.HKDF_Sha256,
 		Memlimit: MEM_LIMIT,
 		Opslimit: OPS_LIMIT,
-		Salt:     []byte("12345678901234567890123456789012"), // 32 bytes salt
+		Salt:     []byte("1234567890123456"), // 16 bytes
 	}
 	password := memguard.NewBufferFromBytes([]byte("my_secure_password"))
 	defer password.Destroy() // Ensure the password buffer is wiped after use
@@ -26,7 +26,7 @@ func TestGenerateKey(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GenerateKey failed: %v", err)
 	}
-	defer result.Key.Destroy() // Ensure the derived key buffer is wiped after the test
+	defer result.Key.Destroy()                   // Ensure the derived key buffer is wiped after the test
 	defer memguard.WipeBytes(result.KeyVerifier) // Ensure the key verifier is wiped after the test
 
 	// 4. Validate the generated key and verifier

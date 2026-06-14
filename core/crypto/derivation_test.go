@@ -28,7 +28,10 @@ func TestDerivation(t *testing.T) {
 	// 4. Test DerivePasswordKey
 	password := memguard.NewBufferFromBytes([]byte("my_secure_password"))
 	defer password.Destroy()
-	derivedKey := DerivePasswordKey(password, salt, OPS_LIMIT, MEM_LIMIT)
+	derivedKey, err := DerivePasswordKey(password, salt, OPS_LIMIT, MEM_LIMIT)
+	if err != nil {
+		t.Fatalf("DerivePasswordKey failed: %v", err)
+	}
 	if len(derivedKey.Bytes()) != SECRET_KEY_BYTES {
 		t.Fatalf("Expected derived key length of %d, got %d", SECRET_KEY_BYTES, len(derivedKey.Bytes()))
 	}
