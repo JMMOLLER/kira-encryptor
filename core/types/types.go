@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 // Represents the various buffer encodings supported.
 type BufferEncoding string
 
@@ -47,4 +49,23 @@ type VaultHeader struct {
 	Opslimit uint32 `json:"opslimit"`
 	Memlimit uint32 `json:"memlimit"`
 	Verifier []byte `json:"verifier"`
+}
+
+type VaultItemType string
+
+const (
+	VaultItemTypeFile   VaultItemType = "file"
+	VaultItemTypeFolder VaultItemType = "folder"
+)
+
+type VaultItem struct {
+	ExtraProps    map[string]any `json:"extraProps,omitempty"`
+	EncryptedName string         `json:"encryptedName"`
+	EncryptedAt   *time.Time     `json:"encryptedAt,omitempty"`
+	IsHidden      bool           `json:"isHidden,omitempty"`
+	Size          int64          `json:"size,omitempty"`
+	Path          string         `json:"path"`
+	ID            string         `json:"_id"`
+	Type          VaultItemType  `json:"type"`
+	Content       []VaultItem    `json:"content,omitempty"`
 }
