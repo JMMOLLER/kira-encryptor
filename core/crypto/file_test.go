@@ -10,21 +10,22 @@ import (
 )
 
 func TestEncryptDecryptFile(t *testing.T) {
-	// 1. Configuración de archivos de prueba
-	// Asumimos que tienes un archivo en "testdata/input.txt"
-	inputFilePath := filepath.Join("..\\..\\demo\\others\\image.webp")
-	encryptedPath := filepath.Join("..\\..\\demo\\others\\image.kira")
-	decryptedPath := filepath.Join("..\\..\\demo\\others\\image.dec")
+	// 1. Crear un archivo de entrada temporal con contenido binario real.
+	tmpDir := t.TempDir()
+	inputFilePath := filepath.Join(tmpDir, "input.bin")
+	encryptedPath := filepath.Join(tmpDir, "input.kira")
+	decryptedPath := filepath.Join(tmpDir, "input.dec")
 
-	// Asegurarse de que el archivo de entrada existe para la prueba
-	if _, err := os.Stat(inputFilePath); os.IsNotExist(err) {
-		t.Fatalf("El archivo de prueba %s no existe. Por favor créalo para ejecutar el test.", inputFilePath)
+	original := bytes.Repeat([]byte("kira-encryptor-core"), 1024)
+	if err := os.WriteFile(inputFilePath, original, 0o600); err != nil {
+		t.Fatalf("No se pudo crear el archivo de prueba: %v", err)
 	}
 
-	// 2. Limpieza al terminar
+	// 2. Limpieza al terminar.
+	defer memguard.Purge()
+	defer os.Remove(inputFilePath)
 	defer os.Remove(encryptedPath)
 	defer os.Remove(decryptedPath)
-	defer memguard.Purge()
 
 	// 3. Crear clave secreta de prueba
 	secretKey := memguard.NewBufferFromBytes([]byte("super-secret-key-32-bytes-long!!"))
