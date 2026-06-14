@@ -12,9 +12,9 @@ import (
 func TestEncryptDecryptFile(t *testing.T) {
 	// 1. Configuración de archivos de prueba
 	// Asumimos que tienes un archivo en "testdata/input.txt"
-	inputFilePath := filepath.Join("E:\\kira-encryptor\\demo\\others\\image.webp")
-	encryptedPath := filepath.Join("E:\\kira-encryptor\\demo\\others\\image.enc")
-	decryptedPath := filepath.Join("E:\\kira-encryptor\\demo\\others\\image.dec")
+	inputFilePath := filepath.Join("..\\..\\demo\\others\\image.webp")
+	encryptedPath := filepath.Join("..\\..\\demo\\others\\image.kira")
+	decryptedPath := filepath.Join("..\\..\\demo\\others\\image.dec")
 
 	// Asegurarse de que el archivo de entrada existe para la prueba
 	if _, err := os.Stat(inputFilePath); os.IsNotExist(err) {
