@@ -249,6 +249,9 @@ func DecryptFile(ctx context.Context, opts FileDecryptionOptions) error {
 	// Calculate the initial processed bytes count after reading the header and metadata.
 	var processedBytes int64 = int64(len(FILE_MAGIC)) + 1 + int64(HEADER_LEN_BYTES) + int64(headerLen)
 
+	maxEncLen := CHUNK_SIZE + aead.Overhead() // Allow some buffer for overhead
+	cipherTextBuf := make([]byte, maxEncLen)
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -274,12 +277,12 @@ func DecryptFile(ctx context.Context, opts FileDecryptionOptions) error {
 		encryptedLen := binary.BigEndian.Uint64(lenBuf)
 
 		// Prevent potential DoS by validating the encrypted chunk length before reading the chunk data.
-		if encryptedLen > uint64(CHUNK_SIZE+aead.Overhead()+1024) {
+		if encryptedLen > uint64(CHUNK_SIZE+aead.Overhead()) {
 			return &errors.CryptoError{Op: "validating chunk size", Err: fmt.Errorf("chunk size exceeds allowed limits, possible file corruption")}
 		}
 
-		// Read the encrypted chunk data based on the length read.
-		cipherTextBuf := make([]byte, encryptedLen)
+		// Resize the buffer to the actual encrypted length
+		cipherTextBuf := cipherTextBuf[:encryptedLen]
 		if _, err := io.ReadFull(sourceFile, cipherTextBuf); err != nil {
 			return &errors.FileError{Path: opts.FilePath, Op: "reading ciphertext", Err: err}
 		}
