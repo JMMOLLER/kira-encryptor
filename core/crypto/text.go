@@ -53,8 +53,6 @@ func ByteToString(b []byte, encoding types.BufferEncoding) (string, error) {
 	// Encode the ciphertext using the specified encoding.
 	var encoded string
 	switch encoding {
-	case types.BufferEncodingBase64:
-		encoded = base64.StdEncoding.EncodeToString(b)
 	case types.BufferEncodingBase64URL:
 		encoded = base64.URLEncoding.EncodeToString(b)
 	case types.BufferEncodingHex:
@@ -70,8 +68,6 @@ func StringToByte(s string, encoding types.BufferEncoding) ([]byte, error) {
 	var decoded []byte
 	var err error
 	switch encoding {
-	case types.BufferEncodingBase64:
-		decoded, err = base64.StdEncoding.DecodeString(s)
 	case types.BufferEncodingBase64URL:
 		decoded, err = base64.URLEncoding.DecodeString(s)
 	case types.BufferEncodingHex:

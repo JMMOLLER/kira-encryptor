@@ -10,7 +10,6 @@ import (
 type BufferEncoding string
 
 const (
-	BufferEncodingBase64    BufferEncoding = "base64"
 	BufferEncodingBase64URL BufferEncoding = "base64url"
 	BufferEncodingHex       BufferEncoding = "hex"
 )

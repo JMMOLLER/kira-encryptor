@@ -23,7 +23,6 @@ func TestCryptoText(t *testing.T) {
 		name     string
 		encoding types.BufferEncoding
 	}{
-		{name: "Base64 Encoding", encoding: types.BufferEncodingBase64},
 		{name: "Base64URL Encoding", encoding: types.BufferEncodingBase64URL},
 		{name: "Hex Encoding", encoding: types.BufferEncodingHex},
 	}
