@@ -41,6 +41,6 @@ func DerivePasswordKey(password *memguard.LockedBuffer, salt []byte, ops, mem ui
 	// Move the derived key into a memguard locked buffer for secure handling
 	key := memguard.NewBuffer(SECRET_KEY_BYTES)
 	key.Move(derivedKey)
-	
+
 	return key, nil
 }
