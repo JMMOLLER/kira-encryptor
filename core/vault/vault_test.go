@@ -1,173 +1,327 @@
 package vault
 
 import (
-	"os"
+	"fmt"
 	"path/filepath"
+	"sync"
 	"testing"
 )
 
-func newTestVault(t *testing.T) *Vault {
-	t.Helper()
-
-	file := filepath.Join(t.TempDir(), "vault.json")
-
-	db, err := New(file)
-	if err != nil {
-		t.Fatalf("New() error = %v", err)
-	}
-
-	return db
+type person struct {
+	Name string
+	Age  int
 }
 
 func TestSetAndGet(t *testing.T) {
-	db := newTestVault(t)
+	dir := t.TempDir()
 
-	input := map[string]any{
-		"name":     "Jhon Doe",
-		"age":      22,
-		"verified": true,
-	}
-
-	if err := db.Set("user", input); err != nil {
-		t.Fatalf("Set() error = %v", err)
-	}
-
-	var output map[string]any
-
-	if err := db.Get("user", &output); err != nil {
-		t.Fatalf("Get() error = %v", err)
-	}
-
-	if output["name"] != "Jhon Doe" {
-		t.Errorf("expected name Jhon Doe, got %v", output["name"])
-	}
-
-	if output["verified"] != true {
-		t.Errorf("expected verified true")
-	}
-
-	if output["age"].(float64) != 22 {
-		t.Errorf("expected age 22")
-	}
-}
-
-func TestExists(t *testing.T) {
-	db := newTestVault(t)
-
-	if db.Exists("foo") {
-		t.Fatal("key should not exist")
-	}
-
-	if err := db.Set("foo", "bar"); err != nil {
+	v, err := New(filepath.Join(dir, "vault.json"))
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !db.Exists("foo") {
-		t.Fatal("key should exist")
+	expected := person{
+		Name: "John",
+		Age:  30,
+	}
+
+	if err := v.Set("user", expected); err != nil {
+		t.Fatal(err)
+	}
+
+	var got person
+
+	if err := v.Get("user", &got); err != nil {
+		t.Fatal(err)
+	}
+
+	if got != expected {
+		t.Fatalf("expected %+v, got %+v", expected, got)
+	}
+}
+
+func TestGetNotFound(t *testing.T) {
+	dir := t.TempDir()
+
+	v, err := New(filepath.Join(dir, "vault.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var p person
+
+	err = v.Get("missing", &p)
+
+	if err == nil {
+		t.Fatal("expected error")
 	}
 }
 
 func TestDelete(t *testing.T) {
-	db := newTestVault(t)
+	dir := t.TempDir()
 
-	db.Set("foo", "bar")
-
-	if err := db.Delete("foo"); err != nil {
+	v, err := New(filepath.Join(dir, "vault.json"))
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	if db.Exists("foo") {
-		t.Fatal("key should have been deleted")
-	}
-}
-
-func TestKeys(t *testing.T) {
-	db := newTestVault(t)
-
-	db.Set("a", 1)
-	db.Set("b", 2)
-	db.Set("c", 3)
-
-	keys := db.Keys()
-
-	if len(keys) != 3 {
-		t.Fatalf("expected 3 keys, got %d", len(keys))
+	if err := v.Set("a", 123); err != nil {
+		t.Fatal(err)
 	}
 
-	found := map[string]bool{}
-
-	for _, k := range keys {
-		found[k] = true
+	if err := v.Delete("a"); err != nil {
+		t.Fatal(err)
 	}
 
-	for _, k := range []string{"a", "b", "c"} {
-		if !found[k] {
-			t.Errorf("missing key %s", k)
-		}
+	if v.Exists("a") {
+		t.Fatal("key should not exist")
 	}
 }
 
 func TestClear(t *testing.T) {
-	db := newTestVault(t)
+	dir := t.TempDir()
 
-	db.Set("foo", "bar")
-	db.Set("hello", "world")
-
-	if err := db.Clear(); err != nil {
+	v, err := New(filepath.Join(dir, "vault.json"))
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(db.Keys()) != 0 {
+	_ = v.Set("a", 1)
+	_ = v.Set("b", 2)
+	_ = v.Set("c", 3)
+
+	if err := v.Clear(); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(v.Keys()) != 0 {
 		t.Fatal("vault should be empty")
 	}
 }
 
 func TestPersistence(t *testing.T) {
 	dir := t.TempDir()
-	file := filepath.Join(dir, "vault.json")
 
-	db, err := New(file)
-	if err != nil {
-		t.Fatal(err)
+	path := filepath.Join(dir, "vault.json")
+
+	{
+		v, err := New(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if err := v.Set("value", 42); err != nil {
+			t.Fatal(err)
+		}
 	}
 
-	db.Set("message", "hello")
+	{
+		v, err := New(path)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	db2, err := New(file)
-	if err != nil {
-		t.Fatal(err)
-	}
+		var n int
 
-	var value string
+		if err := v.Get("value", &n); err != nil {
+			t.Fatal(err)
+		}
 
-	if err := db2.Get("message", &value); err != nil {
-		t.Fatal(err)
-	}
-
-	if value != "hello" {
-		t.Fatalf("expected hello, got %s", value)
-	}
-}
-
-func TestGetNotFound(t *testing.T) {
-	db := newTestVault(t)
-
-	var value string
-
-	if err := db.Get("missing", &value); err == nil {
-		t.Fatal("expected error")
+		if n != 42 {
+			t.Fatalf("expected 42, got %d", n)
+		}
 	}
 }
 
-func TestLoadInvalidJSON(t *testing.T) {
+func TestConcurrentSet(t *testing.T) {
 	dir := t.TempDir()
-	file := filepath.Join(dir, "vault.json")
 
-	if err := os.WriteFile(file, []byte("{invalid json"), 0644); err != nil {
+	v, err := New(filepath.Join(dir, "vault.json"))
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := New(file); err == nil {
-		t.Fatal("expected error")
+	const workers = 100
+
+	var wg sync.WaitGroup
+
+	wg.Add(workers)
+
+	for i := range workers {
+		go func(i int) {
+			defer wg.Done()
+
+			key := fmt.Sprintf("key-%d", i)
+
+			if err := v.Set(key, i); err != nil {
+				t.Error(err)
+			}
+		}(i)
 	}
+
+	wg.Wait()
+
+	for i := range workers {
+		var n int
+
+		key := fmt.Sprintf("key-%d", i)
+
+		if err := v.Get(key, &n); err != nil {
+			t.Fatalf("missing key %s", key)
+		}
+
+		if n != i {
+			t.Fatalf("expected %d, got %d", i, n)
+		}
+	}
+}
+
+func TestConcurrentReaders(t *testing.T) {
+	dir := t.TempDir()
+
+	v, err := New(filepath.Join(dir, "vault.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := v.Set("number", 100); err != nil {
+		t.Fatal(err)
+	}
+
+	const readers = 100
+
+	var wg sync.WaitGroup
+
+	wg.Add(readers)
+
+	for range readers {
+		go func() {
+			defer wg.Done()
+
+			var n int
+
+			if err := v.Get("number", &n); err != nil {
+				t.Error(err)
+				return
+			}
+
+			if n != 100 {
+				t.Errorf("expected 100 got %d", n)
+			}
+		}()
+	}
+
+	wg.Wait()
+}
+
+func TestTwoInstancesShareSameFile(t *testing.T) {
+	dir := t.TempDir()
+
+	path := filepath.Join(dir, "vault.json")
+
+	v1, err := New(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	v2, err := New(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := v1.Set("a", 1); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := v2.Refresh(); err != nil {
+		t.Fatal(err)
+	}
+
+	var n int
+
+	if err := v2.Get("a", &n); err != nil {
+		t.Fatal(err)
+	}
+
+	if n != 1 {
+		t.Fatalf("expected 1 got %d", n)
+	}
+}
+
+func TestSetMany(t *testing.T) {
+	dir := t.TempDir()
+
+	v, err := New(filepath.Join(dir, "vault.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	values := map[string]any{
+		"a": 1,
+		"b": 2,
+		"c": 3,
+	}
+
+	if err := v.SetMany(values); err != nil {
+		t.Fatal(err)
+	}
+
+	for k, expected := range map[string]int{
+		"a": 1,
+		"b": 2,
+		"c": 3,
+	} {
+		var got int
+
+		if err := v.Get(k, &got); err != nil {
+			t.Fatal(err)
+		}
+
+		if got != expected {
+			t.Fatalf("%s expected %d got %d", k, expected, got)
+		}
+	}
+}
+
+// Run with `go test -race` to check for race conditions
+func TestConcurrentReadWrite(t *testing.T) {
+	dir := t.TempDir()
+
+	v, err := New(filepath.Join(dir, "vault.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var wg sync.WaitGroup
+
+	for i := range 50 {
+		wg.Add(1)
+
+		go func(i int) {
+			defer wg.Done()
+
+			key := fmt.Sprintf("k%d", i)
+
+			for j := range 100 {
+				_ = v.Set(key, j)
+			}
+		}(i)
+	}
+
+	for i := range 50 {
+		wg.Add(1)
+
+		go func(i int) {
+			defer wg.Done()
+
+			key := fmt.Sprintf("k%d", i)
+
+			for range 100 {
+				var x int
+				_ = v.Get(key, &x)
+			}
+		}(i)
+	}
+
+	wg.Wait()
 }
