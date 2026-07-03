@@ -15,14 +15,7 @@ const (
 	BufferEncodingHex       BufferEncoding = "hex"
 )
 
-// Indicates the type of task a worker should perform.
-type WorkerTaskType string
-
-const (
-	WorkerTaskEncrypt WorkerTaskType = "encrypt"
-	WorkerTaskDecrypt WorkerTaskType = "decrypt"
-)
-
+// Represents the different key derivation function types supported.
 type KdfType string
 
 const (
@@ -36,7 +29,6 @@ type ProgressCallback func(processedBytes, totalBytes int64)
 type EncryptorOptions struct {
 	DBPath          string
 	AllowExtraProps bool
-	MaxThreads      int
 	EnableLogging   bool
 	Encoding        BufferEncoding
 }
