@@ -11,75 +11,76 @@ import (
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
-func EncryptText(txt string, secretKey *memguard.LockedBuffer, encoding types.BufferEncoding) (string, error) {
+func EncryptBytes(content []byte, secretKey *memguard.LockedBuffer, encoding types.BufferEncoding) ([]byte, error) {
 	// Create AEAD cipher using the secret key.
 	aead, err := chacha20poly1305.NewX(secretKey.Bytes())
 	if err != nil {
-		return "", &errors.CryptoError{Op: "creating AEAD cipher", Err: err}
+		return nil, &errors.CryptoError{Op: "creating AEAD cipher", Err: err}
 	}
 
-	// Convert the plaintext string to bytes.
-	txtBytes := []byte(txt)
-
 	// Generate a ciphertext buffer with the appropriate size (nonce + ciphertext + tag).
-	cipherText := make([]byte, aead.NonceSize(), aead.NonceSize()+len(txtBytes)+aead.Overhead())
+	cipherText := make([]byte, aead.NonceSize(), aead.NonceSize()+len(content)+aead.Overhead())
 	if _, err := rand.Read(cipherText[:aead.NonceSize()]); err != nil {
-		return "", &errors.CryptoError{Op: "generating nonce", Err: err}
+		return nil, &errors.CryptoError{Op: "generating nonce", Err: err}
 	}
 
 	// Encrypt the plaintext using the AEAD cipher.
-	cipherText = aead.Seal(cipherText[:aead.NonceSize()], cipherText[:aead.NonceSize()], txtBytes, nil)
+	return aead.Seal(cipherText[:aead.NonceSize()], cipherText[:aead.NonceSize()], content, nil), nil
+}
 
+func DecryptBytes(content []byte, secretKey *memguard.LockedBuffer, encoding types.BufferEncoding) ([]byte, error) {
+	// Initialize the AEAD cipher with the secret key.
+	aead, err := chacha20poly1305.NewX(secretKey.Bytes())
+	if err != nil {
+		return nil, &errors.CryptoError{Op: "initializing AEAD cipher", Err: err}
+	}
+
+	// Ensure the ciphertext is long enough to contain the nonce and tag.
+	if len(content) < aead.NonceSize() {
+		return nil, &errors.CryptoError{Op: "validating ciphertext length", Err: errors.ErrInvalidKey}
+	}
+
+	// Decrypt the ciphertext using the AEAD cipher.
+	plainText, err := aead.Open(nil, content[:aead.NonceSize()], content[aead.NonceSize():], nil)
+	if err != nil {
+		return nil, &errors.CryptoError{Op: "decrypting ciphertext", Err: err}
+	}
+
+	return plainText, nil
+}
+
+func ByteToString(b []byte, encoding types.BufferEncoding) (string, error) {
 	// Encode the ciphertext using the specified encoding.
 	var encoded string
 	switch encoding {
 	case types.BufferEncodingBase64:
-		encoded = base64.StdEncoding.EncodeToString(cipherText)
+		encoded = base64.StdEncoding.EncodeToString(b)
 	case types.BufferEncodingBase64URL:
-		encoded = base64.URLEncoding.EncodeToString(cipherText)
+		encoded = base64.URLEncoding.EncodeToString(b)
 	case types.BufferEncodingHex:
-		encoded = hex.EncodeToString(cipherText)
+		encoded = hex.EncodeToString(b)
 	default:
-		return "", &errors.CryptoError{Op: "encoding ciphertext", Err: errors.ErrInvalidKey}
+		return "", &errors.CryptoError{Op: "encoding string", Err: errors.ErrInvalidKey}
 	}
-
 	return encoded, nil
 }
 
-func DecryptText(encryptedText string, secretKey *memguard.LockedBuffer, encoding types.BufferEncoding) (string, error) {
-	// Decode the encrypted text based on the specified encoding.
-	var cipherText []byte
+func StringToByte(s string, encoding types.BufferEncoding) ([]byte, error) {
+	// Decode the string based on the specified encoding.
+	var decoded []byte
 	var err error
 	switch encoding {
 	case types.BufferEncodingBase64:
-		cipherText, err = base64.StdEncoding.DecodeString(encryptedText)
+		decoded, err = base64.StdEncoding.DecodeString(s)
 	case types.BufferEncodingBase64URL:
-		cipherText, err = base64.URLEncoding.DecodeString(encryptedText)
+		decoded, err = base64.URLEncoding.DecodeString(s)
 	case types.BufferEncodingHex:
-		cipherText, err = hex.DecodeString(encryptedText)
+		decoded, err = hex.DecodeString(s)
 	default:
-		return "", &errors.CryptoError{Op: "decoding ciphertext", Err: errors.ErrInvalidKey}
+		return nil, &errors.CryptoError{Op: "decoding string", Err: errors.ErrInvalidKey}
 	}
 	if err != nil {
-		return "", &errors.CryptoError{Op: "decoding ciphertext", Err: err}
+		return nil, &errors.CryptoError{Op: "decoding string", Err: err}
 	}
-
-	// Initialize the AEAD cipher with the secret key.
-	aead, err := chacha20poly1305.NewX(secretKey.Bytes())
-	if err != nil {
-		return "", &errors.CryptoError{Op: "initializing AEAD cipher", Err: err}
-	}
-
-	// Ensure the ciphertext is long enough to contain the nonce and tag.
-	if len(cipherText) < aead.NonceSize() {
-		return "", &errors.CryptoError{Op: "validating ciphertext length", Err: errors.ErrInvalidKey}
-	}
-
-	// Decrypt the ciphertext using the AEAD cipher.
-	plainText, err := aead.Open(nil, cipherText[:aead.NonceSize()], cipherText[aead.NonceSize():], nil)
-	if err != nil {
-		return "", &errors.CryptoError{Op: "decrypting ciphertext", Err: err}
-	}
-
-	return string(plainText), nil
+	return decoded, nil
 }

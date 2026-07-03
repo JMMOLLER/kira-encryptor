@@ -1,6 +1,10 @@
 package types
 
-import "time"
+import (
+	"time"
+
+	"github.com/awnumar/memguard"
+)
 
 // Represents the various buffer encodings supported.
 type BufferEncoding string
@@ -36,19 +40,25 @@ type EncryptorOptions struct {
 	EnableLogging   bool
 	Encoding        BufferEncoding
 }
+type EncryptorFolderOptions struct {
+	FolderPath  string
+	SecretKey   *memguard.LockedBuffer
+	Concurrency int // <= 0 means decide automatically
+	OnProgress  ProgressCallback
+}
 
 // Defines the header info stored in the encrypted file.
 type EncryptedHeader struct {
-	Kdf      KdfType `json:"kdf"`
-	Salt     []byte `json:"salt"`
+	Kdf  KdfType `json:"kdf"`
+	Salt []byte  `json:"salt"`
 }
 
 type VaultHeader struct {
 	Kdf      KdfType `json:"kdf"`
-	Salt     []byte `json:"salt"`
-	Opslimit uint32 `json:"opslimit"`
-	Memlimit uint32 `json:"memlimit"`
-	Verifier []byte `json:"verifier"`
+	Salt     []byte  `json:"salt"`
+	Opslimit uint32  `json:"opslimit"`
+	Memlimit uint32  `json:"memlimit"`
+	Verifier []byte  `json:"verifier"`
 }
 
 type VaultItemType string

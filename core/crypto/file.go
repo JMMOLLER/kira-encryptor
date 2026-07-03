@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"context"
 	"crypto/cipher"
 	"encoding/binary"
 	"encoding/json"
@@ -22,7 +23,7 @@ type FileEncryptionOptions struct {
 	TempPath   string
 }
 
-func EncryptFile(opts FileEncryptionOptions) error {
+func EncryptFile(ctx context.Context, opts FileEncryptionOptions) error {
 	// Open the source file for reading.
 	sourceFile, err := os.Open(opts.FilePath)
 	if err != nil {
@@ -92,6 +93,13 @@ func EncryptFile(opts FileEncryptionOptions) error {
 	chunkID := uint64(0)
 
 	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err() // Return the context's error if canceled
+		default:
+			// Continue processing
+		}
+
 		bytesRead, err := sourceFile.Read(readBuffer)
 		if err != nil && err != io.EOF {
 			return &errors.FileError{Path: opts.FilePath, Op: "reading source file", Err: err}
@@ -165,7 +173,7 @@ type FileDecryptionOptions struct {
 	TempPath   string
 }
 
-func DecryptFile(opts FileDecryptionOptions) error {
+func DecryptFile(ctx context.Context, opts FileDecryptionOptions) error {
 	// Open the encrypted file for reading and get its total size for progress tracking.
 	sourceFile, err := os.Open(opts.FilePath)
 	if err != nil {
@@ -237,11 +245,18 @@ func DecryptFile(opts FileDecryptionOptions) error {
 	nonceBuf := make([]byte, aead.NonceSize())
 	lenBuf := make([]byte, 8) // 8 bytes for the encrypted chunk length
 	chunkID := uint64(0)
-	
+
 	// Calculate the initial processed bytes count after reading the header and metadata.
 	var processedBytes int64 = int64(len(FILE_MAGIC)) + 1 + int64(HEADER_LEN_BYTES) + int64(headerLen)
 
 	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err() // Return the context's error if canceled
+		default:
+			// Continue processing
+		}
+
 		// Read the next nonce for the chunk
 		if _, err := io.ReadFull(sourceFile, nonceBuf); err != nil {
 			if err == io.EOF {

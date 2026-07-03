@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -39,7 +40,8 @@ func TestEncryptDecryptFile(t *testing.T) {
 		OnProgress: nil,
 	}
 
-	if err := EncryptFile(optsEncrypt); err != nil {
+	ctx := context.Background()
+	if err := EncryptFile(ctx, optsEncrypt); err != nil {
 		t.Fatalf("EncryptFile falló: %v", err)
 	}
 
@@ -51,7 +53,7 @@ func TestEncryptDecryptFile(t *testing.T) {
 		OnProgress: nil,
 	}
 
-	if err := DecryptFile(optsDecrypt); err != nil {
+	if err := DecryptFile(ctx, optsDecrypt); err != nil {
 		t.Fatalf("DecryptFile falló: %v", err)
 	}
 

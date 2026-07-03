@@ -34,19 +34,19 @@ func TestCryptoText(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			// A. Encrypt the plaintext
-			encryptedText, err := EncryptText(plaintext, secretKey, tc.encoding)
+			encryptedText, err := EncryptBytes([]byte(plaintext), secretKey, tc.encoding)
 			if err != nil {
-				t.Fatalf("EncryptText failed: %v", err)
+				t.Fatalf("EncryptBytes failed: %v", err)
 			}
 
 			// B. Decrypt the encrypted text
-			decryptedText, err := DecryptText(encryptedText, secretKey, tc.encoding)
+			decryptedText, err := DecryptBytes(encryptedText, secretKey, tc.encoding)
 			if err != nil {
-				t.Fatalf("DecryptText failed: %v", err)
+				t.Fatalf("DecryptBytes failed: %v", err)
 			}
 
 			// C. Verify the decrypted text matches the original plaintext
-			if decryptedText != plaintext {
+			if string(decryptedText) != plaintext {
 				t.Fatalf("Decrypted text does not match original plaintext")
 			}
 

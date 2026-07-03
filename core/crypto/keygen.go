@@ -15,8 +15,6 @@ type Result struct {
 }
 
 func GenerateKey(password *memguard.LockedBuffer, header types.VaultHeader) (*Result, error) {
-	defer password.Destroy() // Ensure the password buffer is wiped after use
-
 	// Validate Salt
 	if len(header.Salt) != SALT_BYTES {
 		return nil, errors.New("invalid salt length in storage header")
