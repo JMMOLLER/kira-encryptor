@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/awnumar/memguard"
@@ -69,4 +70,9 @@ type VaultItem struct {
 	ID            string         `json:"_id"`
 	Type          VaultItemType  `json:"type"`
 	Content       []VaultItem    `json:"content,omitempty"`
+}
+
+type VaultFile struct {
+	Header *VaultHeader                `json:"__header__"`
+	Body   map[string]json.RawMessage `json:"__body__,omitempty"`
 }

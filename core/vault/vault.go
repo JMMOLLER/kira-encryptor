@@ -7,13 +7,14 @@ import (
 	"sync"
 
 	"github.com/JMMOLLER/kira-encryptor/core/internal/filelock"
+	"github.com/JMMOLLER/kira-encryptor/core/types"
 )
 
 type Vault struct {
 	file     string
 	lockPath string
 	mu       sync.RWMutex // protects in-memory state within this process
-	data     map[string]json.RawMessage
+	data     types.VaultFile
 }
 
 // New opens (or creates) the vault and loads its current state from disk.
@@ -22,7 +23,9 @@ func New(file string) (*Vault, error) {
 	v := &Vault{
 		file:     file,
 		lockPath: file + ".lock",
-		data:     make(map[string]json.RawMessage),
+		data: types.VaultFile{
+			Body: make(map[string]json.RawMessage),
+		},
 	}
 
 	if err := v.Refresh(); err != nil {
@@ -30,6 +33,13 @@ func New(file string) (*Vault, error) {
 	}
 
 	return v, nil
+}
+
+func (v *Vault) SetHeader(header *types.VaultHeader) error {
+	return v.withFileLock(func() error {
+		v.data.Header = header
+		return nil
+	})
 }
 
 // Set stores a single key-value pair.
@@ -40,7 +50,8 @@ func (v *Vault) Set(key string, value any) error {
 		if err != nil {
 			return err
 		}
-		v.data[key] = b
+
+		v.data.Body[key] = b
 		return nil
 	})
 }
@@ -54,10 +65,17 @@ func (v *Vault) SetMany(entries map[string]any) error {
 			if err != nil {
 				return err
 			}
-			v.data[key] = b
+			v.data.Body[key] = b
 		}
 		return nil
 	})
+}
+
+func (v *Vault) GetHeader() *types.VaultHeader {
+	v.mu.RLock()
+	defer v.mu.RUnlock()
+
+	return v.data.Header
 }
 
 // Get retrieves a value and decodes it into dest.
@@ -65,7 +83,7 @@ func (v *Vault) Get(key string, dest any) error {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
 
-	value, ok := v.data[key]
+	value, ok := v.data.Body[key]
 	if !ok {
 		return errors.New("key not found")
 	}
@@ -76,7 +94,7 @@ func (v *Vault) Get(key string, dest any) error {
 // Delete removes a key from the vault.
 func (v *Vault) Delete(key string) error {
 	return v.withFileLock(func() error {
-		delete(v.data, key)
+		delete(v.data.Body, key)
 		return nil
 	})
 }
@@ -86,7 +104,7 @@ func (v *Vault) Exists(key string) bool {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
 
-	_, ok := v.data[key]
+	_, ok := v.data.Body[key]
 	return ok
 }
 
@@ -95,8 +113,8 @@ func (v *Vault) Keys() []string {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
 
-	keys := make([]string, 0, len(v.data))
-	for k := range v.data {
+	keys := make([]string, 0, len(v.data.Body))
+	for k := range v.data.Body {
 		keys = append(keys, k)
 	}
 
@@ -107,7 +125,10 @@ func (v *Vault) Keys() []string {
 // The operation is atomic across processes.
 func (v *Vault) Clear() error {
 	return v.withFileLock(func() error {
-		v.data = make(map[string]json.RawMessage)
+		v.data = types.VaultFile{
+			Header: v.data.Header,
+			Body:   make(map[string]json.RawMessage),
+		}
 		return nil
 	})
 }
@@ -153,21 +174,25 @@ func (v *Vault) withFileLock(fn func() error) error {
 // reloadLocked and saveLocked assume the caller already holds v.mu.
 
 func (v *Vault) reloadLocked() error {
+	newData := types.VaultFile{
+		Body:   make(map[string]json.RawMessage),
+	}
+
 	file, err := os.ReadFile(v.file)
 	if err != nil {
 		if os.IsNotExist(err) {
-			v.data = make(map[string]json.RawMessage)
+			v.data = newData
 			return nil
 		}
 		return err
 	}
 
 	if len(file) == 0 {
-		v.data = make(map[string]json.RawMessage)
+		v.data = newData
 		return nil
 	}
 
-	data := make(map[string]json.RawMessage)
+	data := newData
 	if err := json.Unmarshal(file, &data); err != nil {
 		return err
 	}
