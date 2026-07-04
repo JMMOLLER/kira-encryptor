@@ -175,7 +175,7 @@ func (v *Vault) withFileLock(fn func() error) error {
 
 func (v *Vault) reloadLocked() error {
 	newData := types.VaultFile{
-		Body:   make(map[string]json.RawMessage),
+		Body: make(map[string]json.RawMessage),
 	}
 
 	file, err := os.ReadFile(v.file)
