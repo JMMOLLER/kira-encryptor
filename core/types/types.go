@@ -38,7 +38,7 @@ type FolderOperationOptions struct {
 	Concurrency   int // <= 0 means decide automatically
 	OnProgress    ProgressCallback
 	JobServerName string
-	DeleteOnEnd   bool // if true, deletes the original files after encrypting
+	DeleteOnEnd   *bool // default is true, deletes the original files after processing
 }
 
 // Defines the header info stored in the encrypted file.
