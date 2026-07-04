@@ -32,11 +32,13 @@ type EncryptorOptions struct {
 	EnableLogging   bool
 	Encoding        BufferEncoding
 }
-type EncryptorFolderOptions struct {
-	FolderPath  string
-	SecretKey   *memguard.LockedBuffer
-	Concurrency int // <= 0 means decide automatically
-	OnProgress  ProgressCallback
+type FolderOperationOptions struct {
+	FolderPath    string
+	SecretKey     *memguard.LockedBuffer
+	Concurrency   int // <= 0 means decide automatically
+	OnProgress    ProgressCallback
+	JobServerName string
+	DeleteOnEnd   bool // if true, deletes the original files after encrypting
 }
 
 // Defines the header info stored in the encrypted file.
@@ -73,6 +75,6 @@ type VaultItem struct {
 }
 
 type VaultFile struct {
-	Header *VaultHeader                `json:"__header__"`
+	Header *VaultHeader               `json:"__header__"`
 	Body   map[string]json.RawMessage `json:"__body__,omitempty"`
 }
