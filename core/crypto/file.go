@@ -46,7 +46,7 @@ func EncryptFile(ctx context.Context, opts FileEncryptionOptions) error {
 	defer destFile.Close()
 
 	// Generate a random salt for key derivation.
-	salt, err := generateSalt()
+	salt, err := GenerateSalt()
 	if err != nil {
 		return err
 	}
