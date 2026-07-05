@@ -38,7 +38,7 @@ type EncryptorOptions struct {
 }
 type FolderOperationOptions struct {
 	FolderPath    string
-	SecretKey     *memguard.LockedBuffer
+	SecretKey     *memguard.LockedBuffer // pending implementation.
 	Concurrency   int // <= 0 means decide automatically
 	OnProgress    ProgressCallback
 	JobServerName string
