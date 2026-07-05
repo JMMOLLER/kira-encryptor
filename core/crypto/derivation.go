@@ -10,21 +10,31 @@ import (
 	"golang.org/x/crypto/hkdf"
 )
 
-func DeriveFileKey(secretKey *memguard.LockedBuffer, salt []byte) (*memguard.LockedBuffer, error) {
-	// Derive the file key using HKDF with SHA-256
-	reader := hkdf.New(sha256.New, secretKey.Bytes(), salt, []byte("kira-filekey-v2"))
+// deriveHKDFKey derives a purpose-specific key using HKDF-SHA256.
+//
+// The info label provides domain separation between derived keys.
+func deriveHKDFKey(secretKey *memguard.LockedBuffer, salt []byte, info []byte, op string) (*memguard.LockedBuffer, error) {
+	reader := hkdf.New(sha256.New, secretKey.Bytes(), salt, info)
 
-	// Create a locked buffer for the derived file key
-	fileKey := memguard.NewBuffer(FILE_KEY_BYTES)
+	key := memguard.NewBuffer(FILE_KEY_BYTES)
 
-	// Read the derived key into the locked buffer
-	_, err := io.ReadFull(reader, fileKey.Bytes())
-	if err != nil {
-		fileKey.Destroy() // Ensure the buffer is wiped if there's an error
-		return nil, &errors.CryptoError{Op: "deriving file key", Err: err}
+	if _, err := io.ReadFull(reader, key.Bytes()); err != nil {
+		key.Destroy()
+		return nil, &errors.CryptoError{Op: op, Err: err}
 	}
 
-	return fileKey, nil
+	return key, nil
+}
+
+func DeriveFileKey(secretKey *memguard.LockedBuffer, salt []byte) (*memguard.LockedBuffer, error) {
+	return deriveHKDFKey(secretKey, salt, []byte("kira-filekey-v2"), "deriving file key")
+}
+
+// DeriveVaultKey derives the key used to encrypt the vault body.
+//
+// A dedicated HKDF label keeps it independent from per-file keys.
+func DeriveVaultKey(secretKey *memguard.LockedBuffer, salt []byte) (*memguard.LockedBuffer, error) {
+	return deriveHKDFKey(secretKey, salt, []byte("kira-vaultkey-v1"), "deriving vault key")
 }
 
 func DerivePasswordKey(password *memguard.LockedBuffer, salt []byte, ops, mem uint32) (*memguard.LockedBuffer, error) {

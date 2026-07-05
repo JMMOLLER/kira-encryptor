@@ -14,8 +14,10 @@ type Result struct {
 	KeyVerifier []byte
 }
 
-// This function is responsible for generating a cryptographic key based on the provided
-// password from the user and the parameters specified in the `VaultHeader`.
+// Returned when the supplied password does not match the stored verifier.
+var ErrInvalidPassword = errors.New("invalid password")
+
+// GenerateKey derives the master key and verifies the password when a verifier is present.
 func GenerateKey(password *memguard.LockedBuffer, header types.VaultHeader) (*Result, error) {
 	// Validate Salt
 	if len(header.Salt) != SALT_BYTES {
@@ -51,7 +53,7 @@ func GenerateKey(password *memguard.LockedBuffer, header types.VaultHeader) (*Re
 		ok := checkVerifier(key, header.Salt, header.Verifier)
 		if !ok {
 			key.Destroy()
-			return nil, errors.New("invalid password")
+			return nil, ErrInvalidPassword
 		}
 		verifier = header.Verifier
 	} else {
