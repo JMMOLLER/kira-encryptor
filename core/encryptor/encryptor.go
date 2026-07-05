@@ -798,3 +798,48 @@ func (k *KiraEncryptor) decryptDirNode(node types.VaultItem, currentPath string)
 
 	return nil
 }
+
+func (k *KiraEncryptor) ListEncrypted() ([]types.VaultEntry, error) {
+	keys := k.vault.Keys()
+	entries := make([]types.VaultEntry, 0, len(keys))
+
+	for _, key := range keys {
+		var item types.VaultItem
+		if err := k.vault.Get(key, &item); err != nil {
+			return nil, fmt.Errorf("core: loading vault entry %q: %w", key, err)
+		}
+		entry, err := k.toVaultEntry(item)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, entry)
+	}
+
+	return entries, nil
+}
+
+func (k *KiraEncryptor) toVaultEntry(item types.VaultItem) (types.VaultEntry, error) {
+	name, err := decryptName(item.EncryptedName, k.masterKey)
+	if err != nil {
+		return types.VaultEntry{}, err
+	}
+
+	entry := types.VaultEntry{
+		ID:          item.ID,
+		Name:        name,
+		Type:        item.Type,
+		Size:        item.Size,
+		EncryptedAt: item.EncryptedAt,
+		IsHidden:    item.IsHidden,
+	}
+
+	for _, child := range item.Content {
+		childEntry, err := k.toVaultEntry(child)
+		if err != nil {
+			return types.VaultEntry{}, err
+		}
+		entry.Children = append(entry.Children, childEntry)
+	}
+
+	return entry, nil
+}

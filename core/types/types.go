@@ -85,3 +85,14 @@ type VaultFile struct {
 	Header *VaultHeader               `json:"__header__"`
 	Body   map[string]json.RawMessage `json:"__body__,omitempty"`
 }
+
+// Decrypted view for listing vault contents.
+type VaultEntry struct {
+	ID          string
+	Name        string // decrypted
+	Type        VaultItemType
+	Size        int64
+	EncryptedAt *time.Time
+	IsHidden    bool
+	Children    []VaultEntry
+}
