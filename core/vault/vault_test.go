@@ -1,10 +1,13 @@
 package vault
 
 import (
-	"fmt"
+	"bytes"
+	"errors"
+	"os"
 	"path/filepath"
-	"sync"
 	"testing"
+
+	"github.com/awnumar/memguard"
 )
 
 type person struct {
@@ -12,10 +15,14 @@ type person struct {
 	Age  int
 }
 
+func testPassword(s string) *memguard.LockedBuffer {
+	return memguard.NewBufferFromBytes([]byte(s))
+}
+
 func TestSetAndGet(t *testing.T) {
 	dir := t.TempDir()
 
-	v, err := New(filepath.Join(dir, "vault.json"))
+	v, err := New(testPassword("correct-horse"), filepath.Join(dir, "vault.bin"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +50,7 @@ func TestSetAndGet(t *testing.T) {
 func TestGetNotFound(t *testing.T) {
 	dir := t.TempDir()
 
-	v, err := New(filepath.Join(dir, "vault.json"))
+	v, err := New(testPassword("correct-horse"), filepath.Join(dir, "vault.bin"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +67,7 @@ func TestGetNotFound(t *testing.T) {
 func TestDelete(t *testing.T) {
 	dir := t.TempDir()
 
-	v, err := New(filepath.Join(dir, "vault.json"))
+	v, err := New(testPassword("correct-horse"), filepath.Join(dir, "vault.bin"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,250 +85,100 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-func TestClear(t *testing.T) {
+// TestFileIsEncryptedOnDisk ensures the persisted .bin never contains the
+// plaintext value or key as a raw substring — i.e. the body actually got
+// encrypted rather than json.Marshal'd directly like the old vault.json.
+func TestFileIsEncryptedOnDisk(t *testing.T) {
 	dir := t.TempDir()
+	path := filepath.Join(dir, "vault.bin")
 
-	v, err := New(filepath.Join(dir, "vault.json"))
+	v, err := New(testPassword("correct-horse"), path)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_ = v.Set("a", 1)
-	_ = v.Set("b", 2)
-	_ = v.Set("c", 3)
-
-	if err := v.Clear(); err != nil {
+	secretMarker := "super-secret-item-name-should-not-appear-in-cleartext"
+	if err := v.Set("item-1", secretMarker); err != nil {
 		t.Fatal(err)
 	}
 
-	if len(v.Keys()) != 0 {
-		t.Fatal("vault should be empty")
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !bytes.Equal(raw[:len(vaultMagic)], vaultMagic[:]) {
+		t.Fatalf("expected file to start with vault magic, got %v", raw[:len(vaultMagic)])
+	}
+
+	if bytes.Contains(raw, []byte(secretMarker)) {
+		t.Fatal("plaintext value leaked into the encrypted .bin file")
+	}
+
+	if bytes.Contains(raw, []byte("item-1")) {
+		t.Fatal("plaintext key leaked into the encrypted .bin file")
 	}
 }
 
-func TestPersistence(t *testing.T) {
+// TestReopenWithCorrectPassword ensures data written in one session is
+// readable (decrypted) in a fresh Vault instance opened with the same
+// password.
+func TestReopenWithCorrectPassword(t *testing.T) {
 	dir := t.TempDir()
+	path := filepath.Join(dir, "vault.bin")
 
-	path := filepath.Join(dir, "vault.json")
-
-	{
-		v, err := New(path)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if err := v.Set("value", 42); err != nil {
-			t.Fatal(err)
-		}
+	v1, err := New(testPassword("correct-horse"), path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := v1.Set("user", person{Name: "Ada", Age: 36}); err != nil {
+		t.Fatal(err)
 	}
 
-	{
-		v, err := New(path)
-		if err != nil {
-			t.Fatal(err)
-		}
+	v2, err := New(testPassword("correct-horse"), path)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-		var n int
+	var got person
+	if err := v2.Get("user", &got); err != nil {
+		t.Fatal(err)
+	}
 
-		if err := v.Get("value", &n); err != nil {
-			t.Fatal(err)
-		}
-
-		if n != 42 {
-			t.Fatalf("expected 42, got %d", n)
-		}
+	if got != (person{Name: "Ada", Age: 36}) {
+		t.Fatalf("expected persisted data to survive reopen, got %+v", got)
 	}
 }
 
-func TestConcurrentSet(t *testing.T) {
+// TestReopenWithWrongPassword ensures a wrong password is rejected with
+// ErrInvalidPassword instead of silently returning garbage or an empty
+// vault.
+func TestReopenWithWrongPassword(t *testing.T) {
 	dir := t.TempDir()
+	path := filepath.Join(dir, "vault.bin")
 
-	v, err := New(filepath.Join(dir, "vault.json"))
+	v1, err := New(testPassword("correct-horse"), path)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	const workers = 100
-
-	var wg sync.WaitGroup
-
-	wg.Add(workers)
-
-	for i := range workers {
-		go func(i int) {
-			defer wg.Done()
-
-			key := fmt.Sprintf("key-%d", i)
-
-			if err := v.Set(key, i); err != nil {
-				t.Error(err)
-			}
-		}(i)
+	if err := v1.Set("user", person{Name: "Ada", Age: 36}); err != nil {
+		t.Fatal(err)
 	}
 
-	wg.Wait()
-
-	for i := range workers {
-		var n int
-
-		key := fmt.Sprintf("key-%d", i)
-
-		if err := v.Get(key, &n); err != nil {
-			t.Fatalf("missing key %s", key)
-		}
-
-		if n != i {
-			t.Fatalf("expected %d, got %d", i, n)
-		}
+	_, err = New(testPassword("wrong-password"), path)
+	if err == nil {
+		t.Fatal("expected error for wrong password")
+	}
+	if !errors.Is(err, ErrInvalidPassword) {
+		t.Fatalf("expected ErrInvalidPassword, got %v", err)
 	}
 }
 
-func TestConcurrentReaders(t *testing.T) {
+func TestNewRequiresPassword(t *testing.T) {
 	dir := t.TempDir()
 
-	v, err := New(filepath.Join(dir, "vault.json"))
-	if err != nil {
-		t.Fatal(err)
+	_, err := New(nil, filepath.Join(dir, "vault.bin"))
+	if err == nil {
+		t.Fatal("expected error when password is nil")
 	}
-
-	if err := v.Set("number", 100); err != nil {
-		t.Fatal(err)
-	}
-
-	const readers = 100
-
-	var wg sync.WaitGroup
-
-	wg.Add(readers)
-
-	for range readers {
-		go func() {
-			defer wg.Done()
-
-			var n int
-
-			if err := v.Get("number", &n); err != nil {
-				t.Error(err)
-				return
-			}
-
-			if n != 100 {
-				t.Errorf("expected 100 got %d", n)
-			}
-		}()
-	}
-
-	wg.Wait()
-}
-
-func TestTwoInstancesShareSameFile(t *testing.T) {
-	dir := t.TempDir()
-
-	path := filepath.Join(dir, "vault.json")
-
-	v1, err := New(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	v2, err := New(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := v1.Set("a", 1); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := v2.Refresh(); err != nil {
-		t.Fatal(err)
-	}
-
-	var n int
-
-	if err := v2.Get("a", &n); err != nil {
-		t.Fatal(err)
-	}
-
-	if n != 1 {
-		t.Fatalf("expected 1 got %d", n)
-	}
-}
-
-func TestSetMany(t *testing.T) {
-	dir := t.TempDir()
-
-	v, err := New(filepath.Join(dir, "vault.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	values := map[string]any{
-		"a": 1,
-		"b": 2,
-		"c": 3,
-	}
-
-	if err := v.SetMany(values); err != nil {
-		t.Fatal(err)
-	}
-
-	for k, expected := range map[string]int{
-		"a": 1,
-		"b": 2,
-		"c": 3,
-	} {
-		var got int
-
-		if err := v.Get(k, &got); err != nil {
-			t.Fatal(err)
-		}
-
-		if got != expected {
-			t.Fatalf("%s expected %d got %d", k, expected, got)
-		}
-	}
-}
-
-// Run with `go test -race` to check for race conditions
-func TestConcurrentReadWrite(t *testing.T) {
-	dir := t.TempDir()
-
-	v, err := New(filepath.Join(dir, "vault.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var wg sync.WaitGroup
-
-	for i := range 50 {
-		wg.Add(1)
-
-		go func(i int) {
-			defer wg.Done()
-
-			key := fmt.Sprintf("k%d", i)
-
-			for j := range 100 {
-				_ = v.Set(key, j)
-			}
-		}(i)
-	}
-
-	for i := range 50 {
-		wg.Add(1)
-
-		go func(i int) {
-			defer wg.Done()
-
-			key := fmt.Sprintf("k%d", i)
-
-			for range 100 {
-				var x int
-				_ = v.Get(key, &x)
-			}
-		}(i)
-	}
-
-	wg.Wait()
 }

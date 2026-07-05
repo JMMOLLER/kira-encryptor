@@ -177,6 +177,8 @@ dist
 # Dev
 library.json
 storage.bin
+vault.*
+vault.*.lock
 *.enc
 *.kira
 test.ts
@@ -184,6 +186,8 @@ pendings.md
 tests/tmp
 *.csv
 *.ps1
+scratch.*
+kira-encryptor-core-*.zip
 
 # Ignorar todo dentro de /demo/
 demo/**
@@ -195,6 +199,3 @@ demo/**
 !demo/**/*.jpeg
 !demo/**/*.gif
 !demo/**/*.webp
-
-scratch.*
-kira-encryptor-core-*.zip

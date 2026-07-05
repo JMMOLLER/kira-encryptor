@@ -43,47 +43,16 @@ func New(password *memguard.LockedBuffer, opts types.EncryptorOptions) (*KiraEnc
 		return nil, fmt.Errorf("core: resolving DBPath: %w", err)
 	}
 
-	v, err := vault.New(opts.DBPath)
+	v, err := vault.New(password, opts.DBPath)
 	if err != nil {
 		return nil, fmt.Errorf("core: opening vault: %w", err)
-	}
-
-	header := v.GetHeader()
-	if header == nil {
-		// Initialize a new vault header.
-		newSalt, err := crypto.GenerateSalt()
-		if err != nil {
-			return nil, fmt.Errorf("core: generating salt: %w", err)
-		}
-
-		header = &types.VaultHeader{
-			Kdf:      "hkdf-sha256",
-			Salt:     newSalt,
-			Opslimit: crypto.OPS_LIMIT,
-			Memlimit: crypto.MEM_LIMIT,
-			Verifier: nil,
-		}
-	}
-
-	result, err := crypto.GenerateKey(password, *header)
-	if err != nil {
-		return nil, fmt.Errorf("core: generating key: %w", err)
-	}
-
-	if header.Verifier == nil {
-		// Persist the verifier on first initialization.
-		header.Verifier = result.KeyVerifier
-		if err := v.SetHeader(header); err != nil {
-			result.Key.Destroy()
-			return nil, fmt.Errorf("core: persisting vault header: %w", err)
-		}
 	}
 
 	return &KiraEncryptor{
 		opts:      opts,
 		vault:     v,
 		dbPathAbs: dbAbs,
-		masterKey: result.Key,
+		masterKey: v.MasterKey(),
 	}, nil
 }
 
