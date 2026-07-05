@@ -25,7 +25,11 @@ const (
 // Expresses the progress of an encryption or decryption operation.
 type ProgressCallback func(processedBytes, totalBytes int64)
 
-// Defines the configuration options for the encryptor.
+// ConflictCallback is triggered when the intended plaintext root path already exists.
+// finalPath is the resolved destination after applying conflict resolution.
+type ConflictCallback func(intendedPath, finalPath string)
+
+// Encryptor configuration options.
 type EncryptorOptions struct {
 	DBPath          string
 	AllowExtraProps bool
@@ -39,6 +43,9 @@ type FolderOperationOptions struct {
 	OnProgress    ProgressCallback
 	JobServerName string
 	DeleteOnEnd   *bool // default is true, deletes the original files after processing
+
+	// Optional hook for handling destination name conflicts during decrypt.
+	OnConflict ConflictCallback
 }
 
 // Defines the header info stored in the encrypted file.

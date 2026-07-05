@@ -109,8 +109,8 @@ func commitPath(origFilePath string, node *treeNode) string {
 //  3. Encrypt files in parallel.
 //  4. Commit encrypted files.
 //  5. Persist the vault entry.
-//  6. Remove plaintext files.
-//  7. Rename directories.
+//  6. Remove plaintext files (only when DeleteOnEnd allows it).
+//  7. Rename directories (only when originals were removed).
 func (k *KiraEncryptor) EncryptFolder(ctx context.Context, opts types.FolderOperationOptions) error {
 	// if opts.SecretKey == nil {
 	// 	return fmt.Errorf("core: SecretKey is required")
@@ -133,6 +133,10 @@ func (k *KiraEncryptor) EncryptFolder(ctx context.Context, opts types.FolderOper
 	if err != nil {
 		return err
 	}
+
+	// When originals are preserved, the encrypted tree is built independently
+	// to avoid mixing plaintext files with the output structure.
+	deleteOriginals := opts.DeleteOnEnd == nil || *opts.DeleteOnEnd
 
 	// Create a temporary staging directory.
 	stagingDir, err := os.MkdirTemp("", ".kira-stage-*")
@@ -168,12 +172,26 @@ func (k *KiraEncryptor) EncryptFolder(ctx context.Context, opts types.FolderOper
 		return fmt.Errorf("core: encrypting folder: %w", err)
 	}
 
-	// Commit staged files using cross-volume safe moves.
-	for _, w := range work {
-		src := stagingPath(stagingDir, w.node)
-		dst := commitPath(w.origPath, w.node)
-		if err := movefile.MoveFile(src, dst); err != nil {
-			return fmt.Errorf("core: committing %q: %w", w.origPath, err)
+	if deleteOriginals {
+		// Commit encrypted files in-place and then remove originals, reusing the tree structure.
+		for _, w := range work {
+			src := stagingPath(stagingDir, w.node)
+			dst := commitPath(w.origPath, w.node)
+			if err := movefile.MoveFile(src, dst); err != nil {
+				return fmt.Errorf("core: committing %q: %w", w.origPath, err)
+			}
+		}
+	} else {
+		// Build a separate output tree when originals are preserved.
+		if err := createDirTree(root); err != nil {
+			return err
+		}
+		for _, w := range work {
+			src := stagingPath(stagingDir, w.node)
+			dst := w.node.item.Path
+			if err := movefile.MoveFile(src, dst); err != nil {
+				return fmt.Errorf("core: committing %q: %w", w.origPath, err)
+			}
 		}
 	}
 
@@ -181,7 +199,7 @@ func (k *KiraEncryptor) EncryptFolder(ctx context.Context, opts types.FolderOper
 		return fmt.Errorf("core: persisting vault entry: %w", err)
 	}
 
-	if opts.DeleteOnEnd == nil || *opts.DeleteOnEnd {
+	if deleteOriginals {
 		var cleanupErrs []error
 		for _, w := range work {
 			if err := os.Remove(w.origPath); err != nil {
@@ -191,11 +209,33 @@ func (k *KiraEncryptor) EncryptFolder(ctx context.Context, opts types.FolderOper
 		if len(cleanupErrs) > 0 {
 			return errors.Join(cleanupErrs...)
 		}
+
+		// Rename directories in bottom-up order to preserve hierarchy.
+		if err := k.renameDirsBottomUp(root); err != nil {
+			return err
+		}
 	}
 
-	// Rename directories bottom-up.
-	if err := k.renameDirsBottomUp(root); err != nil {
-		return err
+	return nil
+}
+
+// createDirTree creates the encrypted directory structure independently
+// of the original tree, preserving directory permissions.
+func createDirTree(node *treeNode) error {
+	info, err := os.Stat(node.origPath)
+	if err != nil {
+		return fmt.Errorf("core: stat %q: %w", node.origPath, err)
+	}
+	if err := os.MkdirAll(node.item.Path, info.Mode().Perm()); err != nil {
+		return fmt.Errorf("core: creating folder %q: %w", node.item.Path, err)
+	}
+
+	for _, child := range node.children {
+		if child.item.Type == types.VaultItemTypeFolder {
+			if err := createDirTree(child); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -454,9 +494,10 @@ func collectDecryptWork(root types.VaultItem, rootPath string) ([]decryptFileWor
 //
 //  1. Load the encrypted tree from the vault.
 //  2. Decrypt files in parallel into a staging directory.
-//  3. Commit decrypted files next to their still ID-named parent folder.
-//  4. Remove the original ciphertext files.
-//  5. Rename directories bottom-up, back to their plaintext names.
+//  3. Commit decrypted files (only when ciphertext originals are removed).
+//  4. Remove the original ciphertext files (only when DeleteOnEnd allows it).
+//  5. Rename directories bottom-up, back to their plaintext names (only
+//     when ciphertext originals were removed).
 //
 // opts.FolderPath must point at the already-encrypted root folder (the
 // one named after its vault ID).
@@ -487,6 +528,8 @@ func (k *KiraEncryptor) DecryptFolder(ctx context.Context, opts types.FolderOper
 	}
 
 	work, totalBytes := collectDecryptWork(root, folderAbs)
+
+	deleteOriginals := opts.DeleteOnEnd == nil || *opts.DeleteOnEnd
 
 	// Create a temporary staging directory.
 	stagingDir, err := os.MkdirTemp("", ".kira-unstage-*")
@@ -523,15 +566,17 @@ func (k *KiraEncryptor) DecryptFolder(ctx context.Context, opts types.FolderOper
 		return fmt.Errorf("core: decrypting folder: %w", err)
 	}
 
-	for _, w := range work {
-		plainName, err := decryptName(w.item.EncryptedName, k.masterKey)
-		if err != nil {
-			return err
-		}
-		src := decryptStagingPath(stagingDir, w.item)
-		dst := filepath.Join(w.parentPath, plainName)
-		if err := movefile.MoveFile(src, dst); err != nil {
-			return fmt.Errorf("core: committing %q: %w", w.currentPath, err)
+	if deleteOriginals {
+		for _, w := range work {
+			plainName, err := decryptName(w.item.EncryptedName, k.masterKey)
+			if err != nil {
+				return err
+			}
+			src := decryptStagingPath(stagingDir, w.item)
+			dst := filepath.Join(w.parentPath, plainName)
+			if err := movefile.MoveFile(src, dst); err != nil {
+				return fmt.Errorf("core: committing %q: %w", w.currentPath, err)
+			}
 		}
 	}
 
@@ -545,18 +590,99 @@ func (k *KiraEncryptor) DecryptFolder(ctx context.Context, opts types.FolderOper
 		if len(cleanupErrs) > 0 {
 			return errors.Join(cleanupErrs...)
 		}
-	}
 
-	if err := k.decryptDirsBottomUp(root, folderAbs); err != nil {
-		return err
-	}
+		if err := k.decryptDirsBottomUp(root, folderAbs, opts.OnConflict); err != nil {
+			return err
+		}
 
-	// The tree is fully restored: drop the vault entry.
-	if err := k.vault.Delete(rootID); err != nil {
-		return fmt.Errorf("core: removing vault entry: %w", err)
+		// The tree is fully restored: drop the vault entry.
+		if err := k.vault.Delete(rootID); err != nil {
+			return fmt.Errorf("core: removing vault entry: %w", err)
+		}
+	} else {
+		dirDest, err := k.createPlaintextDirTree(root, folderAbs, opts.OnConflict)
+		if err != nil {
+			return err
+		}
+		for _, w := range work {
+			plainName, err := decryptName(w.item.EncryptedName, k.masterKey)
+			if err != nil {
+				return err
+			}
+			src := decryptStagingPath(stagingDir, w.item)
+			dst := filepath.Join(dirDest[w.parentPath], plainName)
+			if err := movefile.MoveFile(src, dst); err != nil {
+				return fmt.Errorf("core: committing %q: %w", w.currentPath, err)
+			}
+		}
 	}
 
 	return nil
+}
+
+// createPlaintextDirTree builds a mirrored directory structure with decrypted names,
+// rooted as a sibling of the ciphertext tree. It returns a mapping from original
+// paths to plaintext destinations for direct file placement without touching source data.
+func (k *KiraEncryptor) createPlaintextDirTree(root types.VaultItem, rootPath string, onConflict types.ConflictCallback) (map[string]string, error) {
+	dirDest := make(map[string]string)
+
+	rootPlainName, err := decryptName(root.EncryptedName, k.masterKey)
+	if err != nil {
+		return nil, err
+	}
+	intendedRootDest := filepath.Join(filepath.Dir(rootPath), rootPlainName)
+	rootDest, err := resolveDirConflict(intendedRootDest)
+	if err != nil {
+		return nil, err
+	}
+	if rootDest != intendedRootDest && onConflict != nil {
+		onConflict(intendedRootDest, rootDest)
+	}
+
+	info, err := os.Stat(rootPath)
+	if err != nil {
+		return nil, fmt.Errorf("core: stat %q: %w", rootPath, err)
+	}
+	if err := os.MkdirAll(rootDest, info.Mode().Perm()); err != nil {
+		return nil, fmt.Errorf("core: creating folder %q: %w", rootDest, err)
+	}
+	dirDest[rootPath] = rootDest
+
+	var walk func(item types.VaultItem, currentPath, destPath string) error
+	walk = func(item types.VaultItem, currentPath, destPath string) error {
+		for _, child := range item.Content {
+			if child.Type != types.VaultItemTypeFolder {
+				continue
+			}
+
+			childCurrent := filepath.Join(currentPath, filepath.Base(child.Path))
+			plainName, err := decryptName(child.EncryptedName, k.masterKey)
+			if err != nil {
+				return err
+			}
+			childDest := filepath.Join(destPath, plainName)
+
+			info, err := os.Stat(childCurrent)
+			if err != nil {
+				return fmt.Errorf("core: stat %q: %w", childCurrent, err)
+			}
+			if err := os.MkdirAll(childDest, info.Mode().Perm()); err != nil {
+				return fmt.Errorf("core: creating folder %q: %w", childDest, err)
+			}
+			dirDest[childCurrent] = childDest
+
+			if err := walk(child, childCurrent, childDest); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	if err := walk(root, rootPath, rootDest); err != nil {
+		return nil, err
+	}
+
+	return dirDest, nil
 }
 
 // decryptOne decrypts a single file into the staging directory.
@@ -593,8 +719,34 @@ func (k *KiraEncryptor) decryptOne(
 	return nil
 }
 
+// resolveDirConflict returns a non-colliding destination path.
+// If the path exists, it appends a timestamp, and if needed a random suffix.
+// This is best-effort due to TOCTOU; callers must still handle move failures.
+func resolveDirConflict(dst string) (string, error) {
+	if _, err := os.Stat(dst); err != nil {
+		if os.IsNotExist(err) {
+			return dst, nil
+		}
+		return "", fmt.Errorf("core: checking %q: %w", dst, err)
+	}
+
+	candidate := fmt.Sprintf("%s-%s", dst, time.Now().Format("20060102-150405"))
+	if _, err := os.Stat(candidate); err != nil {
+		if os.IsNotExist(err) {
+			return candidate, nil
+		}
+		return "", fmt.Errorf("core: checking %q: %w", candidate, err)
+	}
+
+	suffix, err := gonanoid.New(6)
+	if err != nil {
+		return "", fmt.Errorf("core: generating disambiguation suffix: %w", err)
+	}
+	return fmt.Sprintf("%s-%s", candidate, suffix), nil
+}
+
 // decryptDirsBottomUp restores directory names from leaves to root.
-func (k *KiraEncryptor) decryptDirsBottomUp(root types.VaultItem, rootPath string) error {
+func (k *KiraEncryptor) decryptDirsBottomUp(root types.VaultItem, rootPath string, onConflict types.ConflictCallback) error {
 	for _, child := range root.Content {
 		childPath := filepath.Join(rootPath, filepath.Base(child.Path))
 		if err := k.decryptDirNode(child, childPath); err != nil {
@@ -606,7 +758,15 @@ func (k *KiraEncryptor) decryptDirsBottomUp(root types.VaultItem, rootPath strin
 	if err != nil {
 		return err
 	}
-	finalPath := filepath.Join(filepath.Dir(rootPath), plainName)
+	intendedPath := filepath.Join(filepath.Dir(rootPath), plainName)
+	finalPath, err := resolveDirConflict(intendedPath)
+	if err != nil {
+		return err
+	}
+	if finalPath != intendedPath && onConflict != nil {
+		onConflict(intendedPath, finalPath)
+	}
+
 	if err := movefile.MoveDir(rootPath, finalPath); err != nil {
 		return fmt.Errorf("core: renaming root folder %q: %w", rootPath, err)
 	}
