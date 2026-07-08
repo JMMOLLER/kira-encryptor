@@ -39,13 +39,12 @@ type EncryptorOptions struct {
 type FolderOperationOptions struct {
 	FolderPath    string
 	SecretKey     *memguard.LockedBuffer // pending implementation.
-	Concurrency   int // <= 0 means decide automatically
+	Concurrency   int                    // <= 0 means decide automatically
 	OnProgress    ProgressCallback
 	JobServerName string
-	DeleteOnEnd   *bool // default is true, deletes the original files after processing
-
-	// Optional hook for handling destination name conflicts during decrypt.
-	OnConflict ConflictCallback
+	DeleteOnEnd   *bool            // default is true, deletes the original files after processing
+	DestPath      string           // Optional: specify a destination path for the output.
+	OnConflict    ConflictCallback // Optional: callback for handling path conflicts during encryption/decryption.
 }
 
 // OperationResult summarizes a completed EncryptFolder or DecryptFolder call.

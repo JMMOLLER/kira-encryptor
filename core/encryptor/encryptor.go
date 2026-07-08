@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -133,7 +134,12 @@ func (k *KiraEncryptor) EncryptFolder(ctx context.Context, opts types.FolderOper
 		return nil, fmt.Errorf("core: %q is not a folder", folderAbs)
 	}
 
-	root, work, totalBytes, err := k.buildTree(folderAbs)
+	destParent, err := resolveDestParent(folderAbs, opts.DestPath)
+	if err != nil {
+		return nil, err
+	}
+
+	root, work, totalBytes, err := k.buildTree(folderAbs, destParent)
 	if err != nil {
 		return nil, err
 	}
@@ -214,6 +220,12 @@ func (k *KiraEncryptor) EncryptFolder(ctx context.Context, opts types.FolderOper
 			return nil, errors.Join(cleanupErrs...)
 		}
 
+		// os.Rename (used by movefile.MoveDir on the same volume) requires
+		// the destination's parent to already exist.
+		if err := os.MkdirAll(destParent, 0755); err != nil {
+			return nil, fmt.Errorf("core: creating dest path %q: %w", destParent, err)
+		}
+
 		// Rename directories in bottom-up order to preserve hierarchy.
 		if err := k.renameDirsBottomUp(root); err != nil {
 			return nil, err
@@ -251,7 +263,7 @@ func createDirTree(node *treeNode) error {
 }
 
 // buildTree constructs the vault tree and collects the encryption work.
-func (k *KiraEncryptor) buildTree(rootPath string) (*treeNode, []fileWork, int64, error) {
+func (k *KiraEncryptor) buildTree(rootPath, destParent string) (*treeNode, []fileWork, int64, error) {
 	rootID, err := gonanoid.New()
 	if err != nil {
 		return nil, nil, 0, fmt.Errorf("core: generating id: %w", err)
@@ -263,7 +275,7 @@ func (k *KiraEncryptor) buildTree(rootPath string) (*treeNode, []fileWork, int64
 	}
 
 	// Root directories are identified on disk by their generated ID.
-	rootFinalPath := filepath.Join(filepath.Dir(rootPath), rootID)
+	rootFinalPath := filepath.Join(destParent, rootID)
 
 	root := &treeNode{
 		item: types.VaultItem{
@@ -531,6 +543,11 @@ func (k *KiraEncryptor) DecryptFolder(ctx context.Context, opts types.FolderOper
 	// Root directory names match their vault ID.
 	rootID := filepath.Base(folderAbs)
 
+	destParent, err := resolveDestParent(folderAbs, opts.DestPath)
+	if err != nil {
+		return nil, err
+	}
+
 	var root types.VaultItem
 	if err := k.vault.Get(rootID, &root); err != nil {
 		return nil, fmt.Errorf("core: loading vault entry %q: %w", rootID, err)
@@ -606,7 +623,13 @@ func (k *KiraEncryptor) DecryptFolder(ctx context.Context, opts types.FolderOper
 			return nil, errors.Join(cleanupErrs...)
 		}
 
-		outputPath, err := k.decryptDirsBottomUp(root, folderAbs, opts.OnConflict)
+		// os.Rename (used by movefile.MoveDir on the same volume) requires
+		// the destination's parent to already exist.
+		if err := os.MkdirAll(destParent, 0755); err != nil {
+			return nil, fmt.Errorf("core: creating dest path %q: %w", destParent, err)
+		}
+
+		outputPath, err := k.decryptDirsBottomUp(root, folderAbs, destParent, opts.OnConflict)
 		if err != nil {
 			return nil, err
 		}
@@ -617,7 +640,7 @@ func (k *KiraEncryptor) DecryptFolder(ctx context.Context, opts types.FolderOper
 
 		result.OutputPath = outputPath
 	} else {
-		dirDest, err := k.createPlaintextDirTree(root, folderAbs, opts.OnConflict)
+		dirDest, err := k.createPlaintextDirTree(root, folderAbs, destParent, opts.OnConflict)
 		if err != nil {
 			return nil, err
 		}
@@ -642,14 +665,14 @@ func (k *KiraEncryptor) DecryptFolder(ctx context.Context, opts types.FolderOper
 // createPlaintextDirTree builds a mirrored directory structure with decrypted names,
 // rooted as a sibling of the ciphertext tree. It returns a mapping from original
 // paths to plaintext destinations for direct file placement without touching source data.
-func (k *KiraEncryptor) createPlaintextDirTree(root types.VaultItem, rootPath string, onConflict types.ConflictCallback) (map[string]string, error) {
+func (k *KiraEncryptor) createPlaintextDirTree(root types.VaultItem, rootPath, destParent string, onConflict types.ConflictCallback) (map[string]string, error) {
 	dirDest := make(map[string]string)
 
 	rootPlainName, err := decryptName(root.EncryptedName, k.masterKey)
 	if err != nil {
 		return nil, err
 	}
-	intendedRootDest := filepath.Join(filepath.Dir(rootPath), rootPlainName)
+	intendedRootDest := filepath.Join(destParent, rootPlainName)
 	rootDest, err := resolveDirConflict(intendedRootDest)
 	if err != nil {
 		return nil, err
@@ -738,6 +761,30 @@ func (k *KiraEncryptor) decryptOne(
 	return nil
 }
 
+// resolveDestParent validates opts.DestPath and resolves the parent
+// directory the operation's output will be placed under. An empty
+// DestPath defaults to sourcePath's own parent directory.
+func resolveDestParent(sourcePath, destPath string) (string, error) {
+	if destPath == "" {
+		return filepath.Dir(sourcePath), nil
+	}
+
+	abs, err := filepath.Abs(destPath)
+	if err != nil {
+		return "", fmt.Errorf("core: resolving DestPath: %w", err)
+	}
+
+	if info, err := os.Stat(abs); err == nil && !info.IsDir() {
+		return "", fmt.Errorf("core: DestPath %q is not a directory", abs)
+	}
+
+	if rel, err := filepath.Rel(sourcePath, abs); err == nil && (rel == "." || !strings.HasPrefix(rel, "..")) {
+		return "", fmt.Errorf("core: DestPath %q cannot be inside %q", abs, sourcePath)
+	}
+
+	return abs, nil
+}
+
 // resolveDirConflict returns a non-colliding destination path.
 // If the path exists, it appends a timestamp, and if needed a random suffix.
 // This is best-effort due to TOCTOU; callers must still handle move failures.
@@ -764,8 +811,9 @@ func resolveDirConflict(dst string) (string, error) {
 	return fmt.Sprintf("%s-%s", candidate, suffix), nil
 }
 
-// decryptDirsBottomUp restores directory names from leaves to root.
-func (k *KiraEncryptor) decryptDirsBottomUp(root types.VaultItem, rootPath string, onConflict types.ConflictCallback) (string, error) {
+// decryptDirsBottomUp restores directory names from leaves to root,
+// returning the root's final resolved path.
+func (k *KiraEncryptor) decryptDirsBottomUp(root types.VaultItem, rootPath, destParent string, onConflict types.ConflictCallback) (string, error) {
 	for _, child := range root.Content {
 		childPath := filepath.Join(rootPath, filepath.Base(child.Path))
 		if err := k.decryptDirNode(child, childPath); err != nil {
@@ -777,7 +825,7 @@ func (k *KiraEncryptor) decryptDirsBottomUp(root types.VaultItem, rootPath strin
 	if err != nil {
 		return "", err
 	}
-	intendedPath := filepath.Join(filepath.Dir(rootPath), plainName)
+	intendedPath := filepath.Join(destParent, plainName)
 	finalPath, err := resolveDirConflict(intendedPath)
 	if err != nil {
 		return "", err

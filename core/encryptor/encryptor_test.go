@@ -285,3 +285,78 @@ func TestEncryptFolderReportsRealProgress(t *testing.T) {
 		}
 	}
 }
+
+// Ensures EncryptFolder places output under a custom DestPath while keeping
+// the ID-based naming, and DecryptFolder mirrors that for its own DestPath.
+func TestFolderOperationsRespectDestPath(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.Join(dir, "demo")
+	if err := os.MkdirAll(root, 0755); err != nil {
+		t.Fatal(err)
+	}
+	mustWriteFile(t, filepath.Join(root, "a.txt"), "hello a")
+
+	encDest := filepath.Join(dir, "enc-out")
+	decDest := filepath.Join(dir, "dec-out")
+
+	key := memguard.NewBufferFromBytes([]byte("pw"))
+	enc, err := New(key, types.EncryptorOptions{DBPath: filepath.Join(dir, "vault.bin")})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encResult, err := enc.EncryptFolder(context.Background(), types.FolderOperationOptions{
+		FolderPath: root,
+		DestPath:   encDest,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filepath.Dir(encResult.OutputPath) != encDest {
+		t.Fatalf("expected output under %q, got %q", encDest, encResult.OutputPath)
+	}
+	if filepath.Base(encResult.OutputPath) != encResult.RootID {
+		t.Fatalf("expected output folder named after RootID, got %q", encResult.OutputPath)
+	}
+	if _, err := os.Stat(root); !os.IsNotExist(err) {
+		t.Fatalf("expected original root to be gone, got: %v", err)
+	}
+
+	decResult, err := enc.DecryptFolder(context.Background(), types.FolderOperationOptions{
+		FolderPath: encResult.OutputPath,
+		DestPath:   decDest,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filepath.Dir(decResult.OutputPath) != decDest {
+		t.Fatalf("expected decrypted output under %q, got %q", decDest, decResult.OutputPath)
+	}
+	if _, err := os.Stat(filepath.Join(decResult.OutputPath, "a.txt")); err != nil {
+		t.Fatalf("missing decrypted file: %v", err)
+	}
+}
+
+// A DestPath inside the source tree must be rejected outright.
+func TestEncryptFolderRejectsNestedDestPath(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.Join(dir, "demo")
+	if err := os.MkdirAll(root, 0755); err != nil {
+		t.Fatal(err)
+	}
+	mustWriteFile(t, filepath.Join(root, "a.txt"), "hello a")
+
+	key := memguard.NewBufferFromBytes([]byte("pw"))
+	enc, err := New(key, types.EncryptorOptions{DBPath: filepath.Join(dir, "vault.bin")})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = enc.EncryptFolder(context.Background(), types.FolderOperationOptions{
+		FolderPath: root,
+		DestPath:   filepath.Join(root, "nested"),
+	})
+	if err == nil {
+		t.Fatal("expected an error for a DestPath nested inside the source folder")
+	}
+}
