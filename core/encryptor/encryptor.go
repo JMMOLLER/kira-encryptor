@@ -15,6 +15,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/JMMOLLER/kira-encryptor/core/crypto"
+	"github.com/JMMOLLER/kira-encryptor/core/internal/hidefile"
 	"github.com/JMMOLLER/kira-encryptor/core/internal/jobserver"
 	"github.com/JMMOLLER/kira-encryptor/core/internal/movefile"
 	"github.com/JMMOLLER/kira-encryptor/core/types"
@@ -817,47 +818,88 @@ func (k *KiraEncryptor) decryptDirNode(node types.VaultItem, currentPath string)
 	return nil
 }
 
-func (k *KiraEncryptor) ListEncrypted() ([]types.VaultEntry, error) {
-	keys := k.vault.Keys()
-	entries := make([]types.VaultEntry, 0, len(keys))
+//===============================
+// 		Visibility (hide/show)
+//===============================
 
-	for _, key := range keys {
-		var item types.VaultItem
-		if err := k.vault.Get(key, &item); err != nil {
-			return nil, fmt.Errorf("core: loading vault entry %q: %w", key, err)
-		}
-		entry, err := k.toVaultEntry(item)
-		if err != nil {
-			return nil, err
-		}
-		entries = append(entries, entry)
-	}
-
-	return entries, nil
+// HideItem hides a vault item and persists its updated state.
+func (k *KiraEncryptor) HideItem(id string) error {
+	return k.setItemVisibility(id, true)
 }
 
-func (k *KiraEncryptor) toVaultEntry(item types.VaultItem) (types.VaultEntry, error) {
-	name, err := decryptName(item.EncryptedName, k.masterKey)
-	if err != nil {
-		return types.VaultEntry{}, err
-	}
+// ShowItem reveals a vault item and persists its updated state.
+func (k *KiraEncryptor) ShowItem(id string) error {
+	return k.setItemVisibility(id, false)
+}
 
-	entry := types.VaultEntry{
-		ID:          item.ID,
-		Name:        name,
-		Type:        item.Type,
-		Size:        item.Size,
-		EncryptedAt: item.EncryptedAt,
-		IsHidden:    item.IsHidden,
-	}
-
-	for _, child := range item.Content {
-		childEntry, err := k.toVaultEntry(child)
-		if err != nil {
-			return types.VaultEntry{}, err
+// setItemVisibility updates an item's visibility and persists any resulting
+// path changes. On platforms where hiding renames the item, descendant paths
+// are updated to keep the stored tree consistent.
+func (k *KiraEncryptor) setItemVisibility(id string, hidden bool) error {
+	for _, rootKey := range k.vault.Keys() {
+		var root types.VaultItem
+		if err := k.vault.Get(rootKey, &root); err != nil {
+			return fmt.Errorf("core: loading vault entry %q: %w", rootKey, err)
 		}
-		entry.Children = append(entry.Children, childEntry)
+
+		target := findVaultItem(&root, id)
+		if target == nil {
+			continue
+		}
+
+		if target.IsHidden == hidden {
+			return nil
+		}
+
+		oldPath := target.Path
+		var newPath string
+		var err error
+		if hidden {
+			newPath, err = hidefile.Hide(oldPath)
+		} else {
+			newPath, err = hidefile.Show(oldPath)
+		}
+		if err != nil {
+			return fmt.Errorf("core: toggling visibility for %q: %w", oldPath, err)
+		}
+
+		// Update descendant paths if the folder was renamed.
+		if newPath != oldPath && target.Type == types.VaultItemTypeFolder {
+			rewriteDescendantPaths(target, oldPath, newPath)
+		}
+
+		target.Path = newPath
+		target.IsHidden = hidden
+
+		if err := k.vault.Set(rootKey, root); err != nil {
+			return fmt.Errorf("core: persisting vault entry %q: %w", rootKey, err)
+		}
+		return nil
 	}
 
-	return entry, nil
+	return fmt.Errorf("core: item %q not found in vault", id)
+}
+
+// findVaultItem returns the item with the given ID.
+func findVaultItem(item *types.VaultItem, id string) *types.VaultItem {
+	if item.ID == id {
+		return item
+	}
+	for i := range item.Content {
+		if found := findVaultItem(&item.Content[i], id); found != nil {
+			return found
+		}
+	}
+	return nil
+}
+
+// rewriteDescendantPaths updates descendant paths after a folder rename.
+func rewriteDescendantPaths(item *types.VaultItem, oldPrefix, newPrefix string) {
+	for i := range item.Content {
+		child := &item.Content[i]
+		if rel, err := filepath.Rel(oldPrefix, child.Path); err == nil {
+			child.Path = filepath.Join(newPrefix, rel)
+		}
+		rewriteDescendantPaths(child, oldPrefix, newPrefix)
+	}
 }
