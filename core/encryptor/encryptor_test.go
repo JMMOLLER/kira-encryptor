@@ -36,7 +36,7 @@ func TestEncryptFolderKeepsOriginalsSeparate(t *testing.T) {
 	}
 
 	deleteFalse := false
-	if err := enc.EncryptFolder(context.Background(), types.FolderOperationOptions{
+	if _, err := enc.EncryptFolder(context.Background(), types.FolderOperationOptions{
 		FolderPath:  root,
 		DeleteOnEnd: &deleteFalse,
 	}); err != nil {
@@ -115,10 +115,14 @@ func TestEncryptFolderDeleteOnEndTrue(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := enc.EncryptFolder(context.Background(), types.FolderOperationOptions{
+	result, err := enc.EncryptFolder(context.Background(), types.FolderOperationOptions{
 		FolderPath: root,
-	}); err != nil {
+	})
+	if err != nil {
 		t.Fatal(err)
+	}
+	if result.RootID == "" {
+		t.Fatal("expected a non-empty RootID")
 	}
 
 	if _, err := os.Stat(root); !os.IsNotExist(err) {
@@ -157,7 +161,7 @@ func TestDecryptFolderKeepsCiphertextSeparate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := enc.EncryptFolder(context.Background(), types.FolderOperationOptions{
+	if _, err := enc.EncryptFolder(context.Background(), types.FolderOperationOptions{
 		FolderPath: root,
 	}); err != nil {
 		t.Fatal(err)
@@ -179,11 +183,15 @@ func TestDecryptFolderKeepsCiphertextSeparate(t *testing.T) {
 	}
 
 	deleteFalse := false
-	if err := enc.DecryptFolder(context.Background(), types.FolderOperationOptions{
+	decryptResult, err := enc.DecryptFolder(context.Background(), types.FolderOperationOptions{
 		FolderPath:  encryptedDir,
 		DeleteOnEnd: &deleteFalse,
-	}); err != nil {
+	})
+	if err != nil {
 		t.Fatal(err)
+	}
+	if decryptResult.OutputPath == "" {
+		t.Fatal("expected a non-empty OutputPath")
 	}
 
 	if _, err := os.Stat(encryptedDir); err != nil {
@@ -245,7 +253,7 @@ func TestEncryptFolderReportsRealProgress(t *testing.T) {
 
 	var reported []int64
 	var lastTotal int64
-	if err := enc.EncryptFolder(context.Background(), types.FolderOperationOptions{
+	if _, err := enc.EncryptFolder(context.Background(), types.FolderOperationOptions{
 		FolderPath: root,
 		OnProgress: func(done, total int64) {
 			reported = append(reported, done)

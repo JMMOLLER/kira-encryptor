@@ -48,6 +48,14 @@ type FolderOperationOptions struct {
 	OnConflict ConflictCallback
 }
 
+// OperationResult summarizes a completed EncryptFolder or DecryptFolder call.
+type OperationResult struct {
+	RootID     string
+	OutputPath string
+	Files      int
+	Bytes      int64
+}
+
 // Defines the header info stored in the encrypted file.
 type EncryptedHeader struct {
 	Kdf  KdfType `json:"kdf"`
