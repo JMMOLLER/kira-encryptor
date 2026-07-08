@@ -217,3 +217,63 @@ func TestDecryptFolderKeepsCiphertextSeparate(t *testing.T) {
 		t.Fatalf("expected vault entry to exist: %v", err)
 	}
 }
+
+// Reproduces a regression where DecryptFile would report progress frozen at the
+// size of the first chunk instead of a cumulative total.
+func TestEncryptFolderReportsRealProgress(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.Join(dir, "demo")
+	if err := os.MkdirAll(root, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Large enough to span several CHUNK_SIZE-sized reads.
+	fileSize := crypto.CHUNK_SIZE*4 + 4321
+	data := make([]byte, fileSize)
+	for i := range data {
+		data[i] = byte(i % 251)
+	}
+	if err := os.WriteFile(filepath.Join(root, "big.bin"), data, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	key := memguard.NewBufferFromBytes([]byte("pw"))
+	enc, err := New(key, types.EncryptorOptions{DBPath: filepath.Join(dir, "vault.bin")})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var reported []int64
+	var lastTotal int64
+	if err := enc.EncryptFolder(context.Background(), types.FolderOperationOptions{
+		FolderPath: root,
+		OnProgress: func(done, total int64) {
+			reported = append(reported, done)
+			lastTotal = total
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(reported) < 2 {
+		t.Fatalf("expected multiple progress callbacks for a %d-byte file, got %d", fileSize, len(reported))
+	}
+	if lastTotal != int64(fileSize) {
+		t.Fatalf("expected total bytes to equal file size %d, got %d", fileSize, lastTotal)
+	}
+
+	// The bug reported progress freezing at (or oscillating around) the
+	// size of the first chunk. Verify the final reported value actually
+	// reaches the true total instead of staying stuck near one chunk.
+	final := reported[len(reported)-1]
+	if final != int64(fileSize) {
+		t.Fatalf("expected final progress to reach %d (full file), got %d — progress looks frozen", fileSize, final)
+	}
+
+	// And progress must never go backward between callbacks.
+	for i := 1; i < len(reported); i++ {
+		if reported[i] < reported[i-1] {
+			t.Fatalf("progress went backward: reported[%d]=%d, reported[%d]=%d", i-1, reported[i-1], i, reported[i])
+		}
+	}
+}
