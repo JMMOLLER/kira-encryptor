@@ -92,6 +92,10 @@ func EncryptFile(ctx context.Context, opts FileEncryptionOptions) error {
 	readBuffer := make([]byte, CHUNK_SIZE)
 	chunkID := uint64(0)
 
+	// Initialize a variable to track the number
+	// of processed bytes for progress reporting.
+	var processedBytes int64
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -123,9 +127,11 @@ func EncryptFile(ctx context.Context, opts FileEncryptionOptions) error {
 			return &errors.FileError{Path: opts.TempPath, Op: "writing encrypted chunk", Err: err}
 		}
 
+		processedBytes += int64(bytesRead)
+
 		// Update progress if a callback is provided.
 		if opts.OnProgress != nil {
-			opts.OnProgress(int64(bytesRead), int64(fileSize))
+			opts.OnProgress(processedBytes, int64(fileSize))
 		}
 
 		if err == io.EOF {
