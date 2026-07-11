@@ -360,3 +360,101 @@ func TestEncryptFolderRejectsNestedDestPath(t *testing.T) {
 		t.Fatal("expected an error for a DestPath nested inside the source folder")
 	}
 }
+
+// Round-trips a single file through EncryptFile/DecryptFile, including a
+// custom DestPath on both ends, and confirms no synthetic folder is created.
+func TestEncryptFileAndDecryptFileRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	filePath := filepath.Join(dir, "report.txt")
+	mustWriteFile(t, filePath, "hello single file")
+
+	encDest := filepath.Join(dir, "enc-out")
+	decDest := filepath.Join(dir, "dec-out")
+
+	key := memguard.NewBufferFromBytes([]byte("pw"))
+	enc, err := New(key, types.EncryptorOptions{DBPath: filepath.Join(dir, "vault.bin")})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encResult, err := enc.EncryptFile(context.Background(), types.FileOperationOptions{
+		FilePath: filePath,
+		DestPath: encDest,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if encResult.RootID == "" {
+		t.Fatal("expected a non-empty RootID")
+	}
+	if filepath.Dir(encResult.OutputPath) != encDest {
+		t.Fatalf("expected output under %q, got %q", encDest, encResult.OutputPath)
+	}
+	if filepath.Base(encResult.OutputPath) != encResult.RootID+crypto.FILE_EXTENSION {
+		t.Fatalf("expected output named after RootID, got %q", encResult.OutputPath)
+	}
+	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
+		t.Fatalf("expected original file to be gone, got: %v", err)
+	}
+
+	var item types.VaultItem
+	if err := enc.vault.Get(encResult.RootID, &item); err != nil {
+		t.Fatalf("expected vault entry to exist: %v", err)
+	}
+	if item.Type != types.VaultItemTypeFile {
+		t.Fatalf("expected a file-typed vault entry, got %v", item.Type)
+	}
+
+	decResult, err := enc.DecryptFile(context.Background(), types.FileOperationOptions{
+		FilePath: encResult.OutputPath,
+		DestPath: decDest,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decResult.RootID != encResult.RootID {
+		t.Fatalf("expected RootID %q, got %q", encResult.RootID, decResult.RootID)
+	}
+	if filepath.Dir(decResult.OutputPath) != decDest {
+		t.Fatalf("expected decrypted output under %q, got %q", decDest, decResult.OutputPath)
+	}
+
+	content, err := os.ReadFile(decResult.OutputPath)
+	if err != nil {
+		t.Fatalf("missing decrypted file: %v", err)
+	}
+	if string(content) != "hello single file" {
+		t.Fatalf("unexpected content: %q", content)
+	}
+
+	if err := enc.vault.Get(encResult.RootID, &item); err == nil {
+		t.Fatal("expected vault entry to be removed after DeleteOnEnd decrypt")
+	}
+}
+
+// EncryptFile must refuse ciphertext files and the vault's own database.
+func TestEncryptFileRejectsCiphertextAndVaultFiles(t *testing.T) {
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "vault.bin")
+
+	key := memguard.NewBufferFromBytes([]byte("pw"))
+	enc, err := New(key, types.EncryptorOptions{DBPath: dbPath})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fakeCiphertext := filepath.Join(dir, "already"+crypto.FILE_EXTENSION)
+	mustWriteFile(t, fakeCiphertext, "not really encrypted")
+
+	if _, err := enc.EncryptFile(context.Background(), types.FileOperationOptions{
+		FilePath: fakeCiphertext,
+	}); err == nil {
+		t.Fatal("expected an error when encrypting a file with the ciphertext extension")
+	}
+
+	if _, err := enc.EncryptFile(context.Background(), types.FileOperationOptions{
+		FilePath: dbPath,
+	}); err == nil {
+		t.Fatal("expected an error when encrypting the vault's own database file")
+	}
+}

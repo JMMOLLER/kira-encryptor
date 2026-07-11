@@ -27,6 +27,9 @@ import (
 // EncryptFolderOptions aliases types.FolderOperationOptions.
 type EncryptFolderOptions = types.FolderOperationOptions
 
+// FileOperationOptions aliases types.FileOperationOptions.
+type FileOperationOptions = types.FileOperationOptions
+
 // OperationResult aliases types.OperationResult.
 type OperationResult = types.OperationResult
 
@@ -237,6 +240,102 @@ func (k *KiraEncryptor) EncryptFolder(ctx context.Context, opts types.FolderOper
 		OutputPath: root.item.Path,
 		Files:      len(work),
 		Bytes:      totalBytes,
+	}, nil
+}
+
+// EncryptFile encrypts a single file. Unlike EncryptFolder, the result is a
+// standalone file-typed vault root — no synthetic containing folder.
+func (k *KiraEncryptor) EncryptFile(ctx context.Context, opts types.FileOperationOptions) (*types.OperationResult, error) {
+	fileAbs, err := filepath.Abs(opts.FilePath)
+	if err != nil {
+		return nil, fmt.Errorf("core: resolving file path: %w", err)
+	}
+
+	info, err := os.Stat(fileAbs)
+	if err != nil {
+		return nil, fmt.Errorf("core: stat file: %w", err)
+	}
+	if info.IsDir() {
+		return nil, fmt.Errorf("core: %q is a folder, use EncryptFolder", fileAbs)
+	}
+
+	lockPath := k.dbPathAbs + ".lock"
+	if filepath.Ext(fileAbs) == crypto.FILE_EXTENSION || fileAbs == k.dbPathAbs || fileAbs == lockPath {
+		return nil, fmt.Errorf("core: %q cannot be encrypted", fileAbs)
+	}
+
+	destParent, err := resolveDestParent(fileAbs, opts.DestPath)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := gonanoid.New()
+	if err != nil {
+		return nil, fmt.Errorf("core: generating id: %w", err)
+	}
+	encryptedName, err := encryptName(filepath.Base(fileAbs), k.masterKey)
+	if err != nil {
+		return nil, err
+	}
+
+	node := &treeNode{
+		item: types.VaultItem{
+			ID:            id,
+			Type:          types.VaultItemTypeFile,
+			Path:          filepath.Join(destParent, id+crypto.FILE_EXTENSION),
+			Size:          info.Size(),
+			EncryptedName: encryptedName,
+		},
+		origPath: fileAbs,
+	}
+
+	stagingDir, err := os.MkdirTemp("", ".kira-stage-*")
+	if err != nil {
+		return nil, fmt.Errorf("core: creating staging dir: %w", err)
+	}
+	defer os.RemoveAll(stagingDir)
+
+	pool, err := resolvePool(opts.JobServerName, opts.Concurrency)
+	if err != nil {
+		return nil, err
+	}
+	defer pool.Close()
+
+	token, err := pool.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var processed atomic.Int64
+	err = k.encryptOne(ctx, fileWork{origPath: fileAbs, node: node}, stagingDir, info.Size(), &processed, opts.OnProgress)
+	token.Release()
+	if err != nil {
+		return nil, fmt.Errorf("core: encrypting file: %w", err)
+	}
+
+	if err := os.MkdirAll(destParent, 0755); err != nil {
+		return nil, fmt.Errorf("core: creating dest path %q: %w", destParent, err)
+	}
+
+	if err := movefile.MoveFile(stagingPath(stagingDir, node), node.item.Path); err != nil {
+		return nil, fmt.Errorf("core: committing %q: %w", fileAbs, err)
+	}
+
+	if err := k.vault.Set(id, node.item); err != nil {
+		return nil, fmt.Errorf("core: persisting vault entry: %w", err)
+	}
+
+	if opts.DeleteOnEnd == nil || *opts.DeleteOnEnd {
+		if err := os.Remove(fileAbs); err != nil {
+			return nil, fmt.Errorf("core: removing original %q: %w", fileAbs, err)
+		}
+	}
+
+	return &types.OperationResult{
+		RootID:     id,
+		OutputPath: node.item.Path,
+		Files:      1,
+		Bytes:      info.Size(),
 	}, nil
 }
 
@@ -662,6 +761,101 @@ func (k *KiraEncryptor) DecryptFolder(ctx context.Context, opts types.FolderOper
 	return result, nil
 }
 
+// DecryptFile decrypts a single file previously produced by EncryptFile.
+func (k *KiraEncryptor) DecryptFile(ctx context.Context, opts types.FileOperationOptions) (*types.OperationResult, error) {
+	fileAbs, err := filepath.Abs(opts.FilePath)
+	if err != nil {
+		return nil, fmt.Errorf("core: resolving file path: %w", err)
+	}
+
+	info, err := os.Stat(fileAbs)
+	if err != nil {
+		return nil, fmt.Errorf("core: stat file: %w", err)
+	}
+	if info.IsDir() {
+		return nil, fmt.Errorf("core: %q is a folder, use DecryptFolder", fileAbs)
+	}
+	if filepath.Ext(fileAbs) != crypto.FILE_EXTENSION {
+		return nil, fmt.Errorf("core: %q is not an encrypted file", fileAbs)
+	}
+
+	rootID := strings.TrimSuffix(filepath.Base(fileAbs), crypto.FILE_EXTENSION)
+
+	var item types.VaultItem
+	if err := k.vault.Get(rootID, &item); err != nil {
+		return nil, fmt.Errorf("core: loading vault entry %q: %w", rootID, err)
+	}
+
+	destParent, err := resolveDestParent(fileAbs, opts.DestPath)
+	if err != nil {
+		return nil, err
+	}
+
+	stagingDir, err := os.MkdirTemp("", ".kira-unstage-*")
+	if err != nil {
+		return nil, fmt.Errorf("core: creating staging dir: %w", err)
+	}
+	defer os.RemoveAll(stagingDir)
+
+	pool, err := resolvePool(opts.JobServerName, opts.Concurrency)
+	if err != nil {
+		return nil, err
+	}
+	defer pool.Close()
+
+	token, err := pool.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	w := decryptFileWork{item: item, currentPath: fileAbs, parentPath: destParent}
+
+	var processed atomic.Int64
+	err = k.decryptOne(ctx, w, stagingDir, item.Size, &processed, opts.OnProgress)
+	token.Release()
+	if err != nil {
+		return nil, fmt.Errorf("core: decrypting file: %w", err)
+	}
+
+	plainName, err := decryptName(item.EncryptedName, k.masterKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := os.MkdirAll(destParent, 0755); err != nil {
+		return nil, fmt.Errorf("core: creating dest path %q: %w", destParent, err)
+	}
+
+	intendedDest := filepath.Join(destParent, plainName)
+	dst, err := resolveFileConflict(intendedDest)
+	if err != nil {
+		return nil, err
+	}
+	if dst != intendedDest && opts.OnConflict != nil {
+		opts.OnConflict(intendedDest, dst)
+	}
+
+	if err := movefile.MoveFile(decryptStagingPath(stagingDir, item), dst); err != nil {
+		return nil, fmt.Errorf("core: committing %q: %w", fileAbs, err)
+	}
+
+	if opts.DeleteOnEnd == nil || *opts.DeleteOnEnd {
+		if err := os.Remove(fileAbs); err != nil {
+			return nil, fmt.Errorf("core: removing ciphertext %q: %w", fileAbs, err)
+		}
+		if err := k.vault.Delete(rootID); err != nil {
+			return nil, fmt.Errorf("core: removing vault entry: %w", err)
+		}
+	}
+
+	return &types.OperationResult{
+		RootID:     rootID,
+		OutputPath: dst,
+		Files:      1,
+		Bytes:      item.Size,
+	}, nil
+}
+
 // createPlaintextDirTree builds a mirrored directory structure with decrypted names,
 // rooted as a sibling of the ciphertext tree. It returns a mapping from original
 // paths to plaintext destinations for direct file placement without touching source data.
@@ -783,6 +977,33 @@ func resolveDestParent(sourcePath, destPath string) (string, error) {
 	}
 
 	return abs, nil
+}
+
+// resolveFileConflict returns a non-colliding destination path for a file.
+func resolveFileConflict(dst string) (string, error) {
+	if _, err := os.Stat(dst); err != nil {
+		if os.IsNotExist(err) {
+			return dst, nil
+		}
+		return "", fmt.Errorf("core: checking %q: %w", dst, err)
+	}
+
+	ext := filepath.Ext(dst)
+	base := strings.TrimSuffix(dst, ext)
+
+	candidate := fmt.Sprintf("%s-%s%s", base, time.Now().Format("20060102-150405"), ext)
+	if _, err := os.Stat(candidate); err != nil {
+		if os.IsNotExist(err) {
+			return candidate, nil
+		}
+		return "", fmt.Errorf("core: checking %q: %w", candidate, err)
+	}
+
+	suffix, err := gonanoid.New(6)
+	if err != nil {
+		return "", fmt.Errorf("core: generating disambiguation suffix: %w", err)
+	}
+	return fmt.Sprintf("%s-%s%s", base, suffix, ext), nil
 }
 
 // resolveDirConflict returns a non-colliding destination path.

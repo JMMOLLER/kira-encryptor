@@ -46,6 +46,16 @@ type FolderOperationOptions struct {
 	DestPath      string           // Optional: specify a destination path for the output.
 	OnConflict    ConflictCallback // Optional: callback for handling path conflicts during encryption/decryption.
 }
+type FileOperationOptions struct {
+	FilePath      string
+	SecretKey     *memguard.LockedBuffer // pending implementation.
+	Concurrency   int                    // pending implementation.
+	OnProgress    ProgressCallback
+	JobServerName string
+	DeleteOnEnd   *bool
+	DestPath      string
+	OnConflict    ConflictCallback
+}
 
 // OperationResult summarizes a completed EncryptFolder or DecryptFolder call.
 type OperationResult struct {
